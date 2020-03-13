@@ -68,10 +68,16 @@ namespace Tools
             {
                 if (GetUrl == String.Empty)
                 {
-                    throw new Error("NET.Get", "请求连接为空");
+                    throw new Error("Tools.NET.Get", "请求连接为空");
                 }
                 try
                 {
+                    //整合要传送的数据
+                    if (data != String.Empty)
+                    {
+                        GetUrl += "?" + data;
+                    }
+
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                     HttpWebRequest myRequest = (HttpWebRequest)WebRequest.Create(GetUrl);
                     myRequest.Method = "GET";
@@ -89,16 +95,6 @@ namespace Tools
                     if (CookieStr != String.Empty)
                     {
                         myRequest.Headers.Add("Cookie", CookieStr);
-                    }
-
-                    //发送数据
-                    if (data != String.Empty)
-                    {
-                        byte[] _data = Encoding.UTF8.GetBytes(this.data);
-                        myRequest.ContentLength = _data.Length;
-                        Stream stream = myRequest.GetRequestStream();
-                        stream.Write(_data, 0, _data.Length);
-                        stream.Close();
                     }
 
                     //获取远程服务器响应
@@ -143,7 +139,7 @@ namespace Tools
             {
                 if (GetUrl == String.Empty)
                 {
-                    throw new Error("NET.Post", "请求连接为空");
+                    throw new Error("Tools.NET.Post", "请求连接为空");
                 }
                 try
                 {
