@@ -14,7 +14,7 @@ using Tools.net;<br/>
 Get get = new Get("请求连接");<br/>
 get.data = "name=Zhangsan&password=Lisi"; // 字符串格式的请求参数<br/>
 get.Getdata(); //返回向服务器请求的数据<br/>
-get.GetUrl = "http://www.github.com"  //在构造函数中没有设置请求地址的情况下，可给该变量赋值达到同样的效果
+get.GetUrl = "http://www.github.com"  //在构造函数中没有设置请求地址的情况下，可给该变量赋值达到同样的效果<br/>
 非必要参数：<br/>
 get.ContentType = "text/json";<br/>
 get.UA = ""// 自定义请求UA<br/>
