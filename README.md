@@ -26,18 +26,18 @@ get.CookieStr= "" //Cookie 字符串格式 默认为空，不为空时启用<br/
 使用方法同Get类似<br/>
 
 
-##命名空间：File
-using Tools.File
+##命名空间：File<br/>
+using Tools.File<br/>
 
-操作.ini配置文件
-InIFile ini = new InIFile("操作文件的路径"); //参数可空
-方法:
-ini.SetFilePath("文件路径"); //没有在构造函数中指定操作文件路径时可用此方法设置
-ini.FilePath = "文件路径";  //或者直接给该属性赋值以达到同样效果
-ini.Write("项","键","值","文件路径[可空]");
-ini.Read("项","键","读取失败时返回值","文件路径[可空]");
-ini.DeleteSection("节点/项","路径[可空]")//删除某节点
-ini.DeleteKey("节点","键","路径[可空]");//删除某键
+操作.ini配置文件<br/>
+InIFile ini = new InIFile("操作文件的路径"); //参数可空<br/>
+方法:<br/>
+ini.SetFilePath("文件路径"); //没有在构造函数中指定操作文件路径时可用此方法设置<br/>
+ini.FilePath = "文件路径";  //或者直接给该属性赋值以达到同样效果<br/>
+ini.Write("项","键","值","文件路径[可空]");<br/>
+ini.Read("项","键","读取失败时返回值","文件路径[可空]");<br/>
+ini.DeleteSection("节点/项","路径[可空]")//删除某节点<br/>
+ini.DeleteKey("节点","键","路径[可空]");//删除某键<br/>
 
 
 
