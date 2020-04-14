@@ -8,7 +8,7 @@ namespace Tools
     //窗口操作
     namespace Formoperate
     {
-        public class Forms
+        public class WinForms
         {
             /// <summary>
             /// 释放鼠标资源 否则SeedMessage可能会失败
