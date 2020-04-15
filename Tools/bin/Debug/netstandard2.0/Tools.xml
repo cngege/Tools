@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Tools</name>
+    </assembly>
+    <members>
+        <member name="M:Tools.Address.Address.GetPid(System.String)">
+            <summary>
+            进程名获取Pid
+            </summary>
+            <param name="name"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Tools.Address.Address.ReadValue(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            读内存
+            </summary>
+            <param name="address">内存地址</param>
+            <param name="pid">进程Pid</param>
+            <param name="AddrSize">读取的内存大小</param>
+            <returns>返回的内存值</returns>
+        </member>
+        <member name="M:Tools.Address.Address.WriteValue(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>
+            写内存
+            </summary>
+            <param name="address">内存地址</param>
+            <param name="value">写入的内存值</param>
+            <param name="pid">进程pid</param>
+            <param name="AddrSize">写入的地址大小</param>
+        </member>
+        <member name="T:Tools.Fileoperate.InIFile">
+            <summary>
+            .ini配置文件类，可读写操作.ini配置文件
+            </summary>
+        </member>
+        <member name="F:Tools.Fileoperate.InIFile.FilePath">
+            <summary>
+            该实例默认的配置文件路径，如果操作时没有指定配置文件，则之前必须要将路径赋值到此变量
+            </summary>
+        </member>
+        <member name="M:Tools.Fileoperate.InIFile.SetFilePath(System.String)">
+            <summary>
+            设置你要操作文件的路径，你要操作之前可以用各种方法设置路径，但是必须要有
+            </summary>
+            <param name="_FilePath">字符串 路径</param>
+        </member>
+        <member name="M:Tools.Fileoperate.InIFile.Read(System.String,System.String,System.String,System.String)">
+            <summary>
+            读取节点文件相信键值内容
+            </summary>
+            <param name="section">节点名称</param>
+            <param name="key">键名称</param>
+            <param name="def">如果读不到则返回该值</param>
+            <param name="_filePath">节点文件路径 [可空]</param>
+            <returns></returns>
+        </member>
+        <member name="M:Tools.Fileoperate.InIFile.Write(System.String,System.String,System.String,System.String)">
+            <summary>
+            向配置文件中写入信息
+            </summary>
+            <param name="section">节点名称</param>
+            <param name="key">键名称</param>
+            <param name="value">键值</param>
+            <param name="_filePath">要操作的路径 [可空]</param>
+            <returns>非0表示成功 0表示失败</returns>
+        </member>
+        <member name="M:Tools.Fileoperate.InIFile.DeleteSection(System.String,System.String)">
+            <summary>
+            删除配置文件节点
+            </summary>
+            <param name="section">节点名称</param>
+            <param name="_filePath">配置文件路径 [可空]</param>
+            <returns>非0表示成功 0表示失败</returns>
+        </member>
+        <member name="M:Tools.Fileoperate.InIFile.DeleteKey(System.String,System.String,System.String)">
+            <summary>
+            删除配置文件键所对应的值
+            </summary>
+            <param name="section">节点名称</param>
+            <param name="key">键名称</param>
+            <param name="_filePath">配置文件路径 [可空]</param>
+            <returns>非0表示成功 0表示失败</returns>
+        </member>
+        <member name="M:Tools.Fileoperate.WriteFile.Write(System.Byte[],System.Int32)">
+            <summary>
+            写入数据到文件
+            </summary>
+            <param name="bt">写入的字节数组数据</param>
+            <param name="_length">写入长度</param>
+        </member>
+        <member name="M:Tools.Formoperate.WinForms.ReleaseCapture">
+            <summary>
+            释放鼠标资源 否则SeedMessage可能会失败
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Tools.Formoperate.WinForms.MoveFrom(System.IntPtr)">
+            <summary>
+            移动窗口，代码放在Down事件下
+            </summary>
+            <param name="handle">窗口句柄[(IntPtr)this.handle]</param>
+            <returns>消息是否发送成功</returns>
+        </member>
+        <member name="M:Tools.Formoperate.WinForms.SetThreadtoUI">
+            <summary>
+            关闭UI对线程的错误捕捉[还未开发]
+            </summary>
+        </member>
+        <member name="M:Tools.Formoperate.WinForms.FormMessage(System.IntPtr,System.Int32)">
+            <summary>
+            发送窗口消息修改窗口的状态 最大化 最小化 关闭 还原
+            </summary>
+            <param name="form">窗口句柄</param>
+            <param name="size">0：关闭，1：最小化，2：还原，3：最大化</param>
+        </member>
+        <!-- Badly formed XML comment ignored for member "F:Tools.Net.Get.data" -->
+        <member name="M:Tools.Net.Get.#ctor(System.String)">
+            <summary>
+            发送网络Get请求
+            </summary>
+            <param name="getUrl">请求的URL</param>
+        </member>
+        <member name="M:Tools.Net.Get.Getdata">
+            <summary>
+            发送Get请求并返回数据
+            </summary>
+            <returns>返回服务器数据</returns>
+        </member>
+        <!-- Badly formed XML comment ignored for member "F:Tools.Net.Post.data" -->
+        <member name="M:Tools.Net.Post.#ctor(System.String)">
+            <summary>
+            发送网络Post请求
+            </summary>
+            <param name="getUrl">请求链接地址</param>
+        </member>
+        <member name="T:Tools.Net.Download.info">
+            <summary>
+            委托 回调给使用者下载进度
+            </summary>
+            <param name="filesize">已下载大小</param>
+            <param name="downsize">总共大小</param>
+            <param name="waft">是否下载完成</param>
+        </member>
+        <member name="M:Tools.Net.Download.GetPercent(System.Int64,System.Int64)">
+            <summary>
+            获取百分比
+            </summary>
+            <param name="news">当前已下载大小</param>
+            <param name="altogether">总大小</param>
+            <returns>返回100以内的包含两位小数的小数</returns>
+        </member>
+        <member name="M:Tools.Net.Download.GetSize(System.Int64)">
+            <summary>
+            转换大小单位为Mb
+            </summary>
+            <param name="b">当前流的数据大小</param>
+            <returns></returns>
+        </member>
+        <member name="M:Tools.Net.Download.Start">
+            <summary>
+            开始下载
+            </summary>
+            <returns>true:开始下载，False:某种原因没有开始下载</returns>
+        </member>
+        <member name="M:Tools.Net.Download.GetHttpLength(System.String)">
+            <summary>
+            获取远程文件的大小
+            </summary>
+            <param name="url"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Tools.Error">
+            <summary>
+            错误类
+            </summary>
+        </member>
+        <member name="M:Tools.Error.#ctor(System.String,System.String)">
+            <summary>
+            用于提供工具箱抛出特定类型的错误
+            </summary>
+            <param name="_Type">是哪一种错误</param>
+            <param name="_Message">错误的具体内容</param>
+        </member>
+        <member name="M:Tools.Data.JSON.ToJson(System.String)">
+            <summary>
+            将JSON格式的字符串重新反序列化
+            </summary>
+            <param name="_json">JSON格式的字符串</param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>
