@@ -31,9 +31,12 @@ namespace Tools
                 return SendMessage(handle, 0XA1, 2, 0);
             }
 
-
+            /// <summary>
+            /// 关闭UI对线程的错误捕捉[还未开发]
+            /// </summary>
             public static void SetThreadtoUI()
             {
+                
                 //CheckForIllegalCrossThreadCalls = false;
             }
 
