@@ -36,12 +36,4 @@ namespace Tools
     }
 
 
-
-
-    //"简单化线程"
-    namespace SimpleThread
-    {
-
-    }
-
 }

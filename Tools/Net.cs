@@ -171,8 +171,6 @@ namespace Tools
             public Stream HttpStream;   //文件下载句柄
             public int bt = 1024;   //下载字节数?下载速度
 
-            //用于回调下载进度
-            public info Downprogress;
             /// <summary>
             /// 委托 回调给使用者下载进度
             /// </summary>
@@ -181,22 +179,43 @@ namespace Tools
             /// <param name="waft">是否下载完成</param>
             public delegate void info(long filesize, long downsize, bool waft);
 
+            //用于回调下载进度
+            public event info Downprogress;
+
+            protected virtual void OnDownprogress(long filesize, long downsize, bool waft)
+            {
+                Downprogress?.Invoke(filesize, downsize, waft);
+            }
+
+
+
             /// <summary>
             /// 获取百分比
             /// </summary>
             /// <param name="news">当前已下载大小</param>
             /// <param name="altogether">总大小</param>
-            /// <returns>返回100以内的包含两位小数的小数</returns>
+            /// <returns>返回1以内的包含两位小数的小数</returns>
             public static double GetPercent(long news, long altogether)
             {
                 return Math.Floor(news *1.00 / altogether * 100) / 100;
             }
 
             /// <summary>
+            /// 获取百分比
+            /// </summary>
+            /// <param name="news">当前已下载大小</param>
+            /// <param name="altogether">总大小</param>
+            /// <returns>返回100以内的整数</returns>
+            public static int GetintPercent(long news, long altogether)
+            {
+                return (int)Math.Floor(news * 1.00 / altogether * 100);
+            }
+
+            /// <summary>
             /// 转换大小单位为Mb
             /// </summary>
             /// <param name="b">当前流的数据大小</param>
-            /// <returns></returns>
+            /// <returns>返回两位小数单位Mb</returns>
             public static double GetSize(long b)
             {
                 return Math.Floor(b * 1.0 / (1024 * 1024) * 100) / 100;
@@ -207,7 +226,6 @@ namespace Tools
                 Url = url;
                 SavePath = savepath;
                 SaveFile = filename;
-
             }
 
             public Download() { }
@@ -265,7 +283,7 @@ namespace Tools
                             FileStream.Handle.Close();
                             FileStream.Handle.Dispose();
                         }
-                        Downprogress?.Invoke(HttpFileSize, HttpFileSize, flag);//委托如果存在则……
+                        OnDownprogress(HttpFileSize, HttpFileSize, flag);
                         return;
                     }
                     HttpWebRequest myRequest = (HttpWebRequest)HttpWebRequest.Create(Url);
@@ -281,7 +299,7 @@ namespace Tools
                     {
                         FileStream.Write(btContent, intSize);
                         intSize = HttpStream.Read(btContent, 0, btContent.Length);
-                        Downprogress?.Invoke(FileStream.Handle.Length, HttpFileSize, flag);
+                        OnDownprogress(FileStream.Handle.Length, HttpFileSize, flag);
                     }
 
                     flag = true;
@@ -307,7 +325,7 @@ namespace Tools
                     if (flag)
                     {
                         //下载完成 传递信号
-                        Downprogress?.Invoke(HttpFileSize, HttpFileSize, flag);
+                        OnDownprogress(HttpFileSize, HttpFileSize, flag);
                     }
                 }
             }
@@ -376,7 +394,35 @@ namespace Tools
                 return FileName;
             }
 
+            public static String GetHttpData(string Url)
+            {
+                string strResult = "";
+                try
+                {
+                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
+                    //声明一个HttpWebRequest请求
+                    request.Timeout = 3000000;
+                    //设置连接超时时间
+                    request.Headers.Set("Pragma", "no-cache");
+                    HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                    if (response.ToString() != "")
+                    {
+                        Stream streamReceive = response.GetResponseStream();
+                        Encoding encoding = Encoding.GetEncoding("UTF-8");
+                        StreamReader streamReader = new StreamReader(streamReceive, encoding);
+                        strResult = streamReader.ReadToEnd();
+                    }
+                }
+                catch
+                {
+                    strResult = "";
+                }
+                return strResult;
+            }
+
         }
+
 
     }
 }
