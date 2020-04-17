@@ -259,6 +259,7 @@ namespace Tools
 
 
                 Thread = new Thread(new ThreadStart(Down));
+                Thread.IsBackground = true;
                 Thread.Start();
                 return true;
             }
