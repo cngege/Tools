@@ -351,6 +351,7 @@ namespace Tools
                 catch
                 {
                     //获取远程文件大小失败
+                    length = 0;
                 }
                 finally
                 {

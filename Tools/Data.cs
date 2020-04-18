@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Windows.Forms;
 
 namespace Tools
 {
@@ -21,6 +22,24 @@ namespace Tools
             }
         }
 
+        public class Data
+        {
+            //复制数据到剪贴板
+            public static void CopyData(object _data)
+            {
+                Clipboard.SetDataObject(_data);
+            }
+
+            /// <summary>
+            /// 复制到剪贴板指定格式的数据
+            /// </summary>
+            /// <param name="format"></param>
+            /// <param name="data">数据</param>
+            public static void CopyData(string format,object data)
+            {
+                Clipboard.SetData(format, data);
+            }
+        }
 
     }
 }

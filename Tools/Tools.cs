@@ -24,6 +24,12 @@ namespace Tools
             MessageText = _Message;
         }
 
+        public Error(String msg)
+        {
+            Type = null;
+            MessageText = msg;
+        }
+
         public String Gettype()
         {
             return Type;

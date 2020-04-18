@@ -36,6 +36,13 @@
             <param name="_json">JSON格式的字符串</param>
             <returns></returns>
         </member>
+        <member name="M:Tools.Data.Data.CopyData(System.String,System.Object)">
+            <summary>
+            复制到剪贴板指定格式的数据
+            </summary>
+            <param name="format"></param>
+            <param name="data">数据</param>
+        </member>
         <member name="T:Tools.Fileoperate.InIFile">
             <summary>
             .ini配置文件类，可读写操作.ini配置文件
