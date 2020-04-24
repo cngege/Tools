@@ -165,12 +165,13 @@ namespace Tools
             public String Url;
             public String SavePath; //保存文件的路径，不包含文件名
             public String SaveFile; //保存文件的文件名
+            public String Suffix = ".tools";//默认下载后缀，下载过程中显示的后缀,下载完成移除
             public long HttpFileSize;   //要下载的文件的总大小
             public Thread Thread;   //调用的线程句柄
             public Fileoperate.WriteFile FileStream;
             public long SPosition = 0;  //告诉服务器开始下载位置
             public Stream HttpStream;   //文件下载句柄
-            public int bt = 1024;   //下载字节数?下载速度
+            public int bt = 1024*10;   //下载字节数?下载速度
             public String Referer = String.Empty;
 
             /// <summary>
@@ -214,9 +215,20 @@ namespace Tools
             }
 
             /// <summary>
+            /// 获取百分比
+            /// </summary>
+            /// <param name="news">当前已下载大小</param>
+            /// <param name="altogether">总大小</param>
+            /// <returns>返回100以内的包含一位小数的小数</returns>
+            public static double GetdoblePercent(long news, long altogether)
+            {
+                return Math.Floor(news * 1.000 / altogether * 1000) / 10;
+            }
+
+            /// <summary>
             /// 转换大小单位为Mb
             /// </summary>
-            /// <param name="b">当前流的数据大小</param>
+            /// <param name="b">当前流的数据大小[b]</param>
             /// <returns>返回两位小数单位Mb</returns>
             public static double GetSize(long b)
             {
@@ -235,35 +247,93 @@ namespace Tools
             /// <summary>
             /// 开始下载
             /// </summary>
-            /// <returns>true:开始下载，False:某种原因没有开始下载</returns>
-            public bool Start()
+            /// <returns>2:下载完成, 1:开始下载，0:某种原因没有开始下载</returns>
+            public int Start()
             {
-                if (SavePath == "" || Url == "" || SaveFile == "")
+                try
                 {
-                    return false;
+                    if (SavePath == "" || Url == "" || SaveFile == "")
+                    {
+                        return 0;
+                    }
+                    if (!SavePath.EndsWith("\\"))   //如果保存路径的结尾不是反斜杠,则补充
+                    {
+                        SavePath += "\\";
+                    }
+
+                    if (Suffix == "") new Error("Tools.Net.Download", "不允许下载到本地文件的的文件名后缀设为空:Suffix!=\"\"");
+
+                    HttpFileSize = GetHttpLength(Url);  //获取服务器文件的大小
+
+                    FileInfo fileA = new FileInfo(SavePath + SaveFile); //获取要求下载至本地文件的属性
+                    FileInfo fileB = new FileInfo(SavePath + SaveFile + Suffix); //获取即将要下载到本地的文件的信息属性
+
+
+                    if (fileA.Exists)   //判断本地文件是否存在,如果存在，则进一步判断
+                    {
+                        if (fileA.Length >= HttpFileSize)   // 本地文件和远程文件一样大 下载完成
+                        {
+                            OnDownprogress(HttpFileSize, HttpFileSize, true);
+                            return 2;
+                        }
+
+                        if (fileB.Exists)   //包含自定义后缀的文件是否存在,如果存在则进一步判断
+                        {
+                            if (fileB.Length >= HttpFileSize)    // 本地文件和远程文件一样大 下载完成
+                            {
+                                fileB.MoveTo(SavePath + SaveFile);
+                                OnDownprogress(HttpFileSize, HttpFileSize, true);
+                                return 2;
+                            }
+
+                            if (fileA.Length > fileB.Length)
+                            {
+                                fileB.Delete();
+                                fileA.MoveTo(SavePath + SaveFile + Suffix);
+                            }
+                            else
+                            {
+                                fileA.Delete();
+                            }
+                        }
+                        else
+                        {
+                            fileA.MoveTo(SavePath + SaveFile + Suffix);
+                        }
+                    }
+                    else
+                    {
+                        if (fileB.Exists)
+                        {
+                            if (fileB.Length >= HttpFileSize)    // 本地缓存文件和远程文件一样大 下载完成
+                            {
+                                fileB.MoveTo(SavePath + SaveFile);
+                                OnDownprogress(HttpFileSize, HttpFileSize, true);
+                                return 2;
+                            }
+                        }
+                    }
+
+                    FileStream = new Fileoperate.WriteFile(SavePath + SaveFile + Suffix);   //创建本地缓存文件的文件流
+
+
+
+                    if (SPosition == 0) SPosition = FileStream.Sposition;   //是否指定了下载位置从头下载，否则从本地文件所在的位置开始下载。
+
+
+                    info Toinfo = new info(Downprogress);
+
+
+                    Thread = new Thread(new ThreadStart(Down));
+                    Thread.IsBackground = true;
+                    Thread.Start();
+                    return 1;
                 }
-                if (!SavePath.EndsWith("\\"))
+                catch (Exception e)
                 {
-                    SavePath += "\\";
+                    new Error("Tools.Net.Download",e.Message);
                 }
-
-                HttpFileSize = GetHttpLength(Url);
-
-                FileStream = new Fileoperate.WriteFile(SavePath + SaveFile);
-
-
-                if (SPosition == 0)
-                {
-                    SPosition = FileStream.Sposition;
-                }
-
-                info Toinfo = new info(Downprogress);
-
-
-                Thread = new Thread(new ThreadStart(Down));
-                Thread.IsBackground = true;
-                Thread.Start();
-                return true;
+                return 0;
             }
 
 
@@ -272,23 +342,6 @@ namespace Tools
                 bool flag = false;
                 try
                 {
-                    if (FileStream.Handle.Length == HttpFileSize)
-                    {
-                        flag = true;
-                        //关闭流
-                        if (HttpStream != null)
-                        {
-                            HttpStream.Close();
-                            HttpStream.Dispose();
-                        }
-                        if (FileStream.Handle != null)
-                        {
-                            FileStream.Handle.Close();
-                            FileStream.Handle.Dispose();
-                        }
-                        OnDownprogress(HttpFileSize, HttpFileSize, flag);
-                        return;
-                    }
                     HttpWebRequest myRequest = (HttpWebRequest)HttpWebRequest.Create(Url);
 
                     if (SPosition > 0) myRequest.AddRange(SPosition);             //设置Range值
@@ -328,6 +381,7 @@ namespace Tools
                     if (flag)
                     {
                         //下载完成 传递信号
+                        File.Move(SavePath + SaveFile + Suffix, SavePath + SaveFile);
                         OnDownprogress(HttpFileSize, HttpFileSize, flag);
                     }
                 }

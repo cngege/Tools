@@ -7,6 +7,7 @@
     <DelaySign>false</DelaySign>
     <Authors>CNGEGE</Authors>
     <Description>我的工具集</Description>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -14,14 +15,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="bin\Debug\netstandard2.0\Tools.deps.json" />
-    <Content Include="bin\Debug\netstandard2.0\Tools.xml" />
+    <Compile Remove="bin\**" />
+    <EmbeddedResource Remove="bin\**" />
+    <None Remove="bin\**" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
-    <None Include="bin\Debug\netstandard2.0\Tools.dll" />
-    <None Include="bin\Debug\netstandard2.0\Tools.pdb" />
   </ItemGroup>
 
   <ItemGroup>

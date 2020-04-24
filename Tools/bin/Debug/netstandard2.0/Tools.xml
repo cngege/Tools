@@ -172,18 +172,26 @@
             <param name="altogether">总大小</param>
             <returns>返回100以内的整数</returns>
         </member>
+        <member name="M:Tools.Net.Download.GetdoblePercent(System.Int64,System.Int64)">
+            <summary>
+            获取百分比
+            </summary>
+            <param name="news">当前已下载大小</param>
+            <param name="altogether">总大小</param>
+            <returns>返回100以内的包含一位小数的小数</returns>
+        </member>
         <member name="M:Tools.Net.Download.GetSize(System.Int64)">
             <summary>
             转换大小单位为Mb
             </summary>
-            <param name="b">当前流的数据大小</param>
+            <param name="b">当前流的数据大小[b]</param>
             <returns>返回两位小数单位Mb</returns>
         </member>
         <member name="M:Tools.Net.Download.Start">
             <summary>
             开始下载
             </summary>
-            <returns>true:开始下载，False:某种原因没有开始下载</returns>
+            <returns>2:下载完成, 1:开始下载，0:某种原因没有开始下载</returns>
         </member>
         <member name="M:Tools.Net.Download.GetHttpLength(System.String,System.String)">
             <summary>
