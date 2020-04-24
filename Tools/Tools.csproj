@@ -21,7 +21,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="bin\Debug\netstandard2.0\Tools.deps.json" />
+    <Content Include="bin\Debug\netstandard2.0\Tools.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
+    <None Include="bin\Debug\netstandard2.0\Tools.dll" />
+    <None Include="bin\Debug\netstandard2.0\Tools.pdb" />
   </ItemGroup>
 
   <ItemGroup>
