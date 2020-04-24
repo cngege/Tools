@@ -17,6 +17,7 @@ namespace Tools
             public String IP = String.Empty;
             public int Port = 6800;
             public String CookieStr = String.Empty;
+            public String Referer = String.Empty;
 
             /// <summary>
             /// 要和链接一起发送的数据,如:user=123&pass=456
@@ -63,10 +64,10 @@ namespace Tools
                     }
 
                     //添加自定义的Cookie
-                    if (CookieStr != String.Empty)
-                    {
-                        myRequest.Headers.Add("Cookie", CookieStr);
-                    }
+                    if (CookieStr != String.Empty) myRequest.Headers.Add("Cookie", CookieStr);
+                    //设置请求Referer信息
+                    if (Referer != String.Empty) myRequest.Referer = Referer;
+                    
 
                     //获取远程服务器响应
                     HttpWebResponse myResponse = (HttpWebResponse)myRequest.GetResponse();
@@ -90,6 +91,7 @@ namespace Tools
             public String UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0";
             public String IP = String.Empty;
             public int Port = 6800;
+            public String Referer = String.Empty;
 
             /// <summary>
             /// 要和链接一起发送的数据,如:user=123&pass=456
@@ -128,10 +130,9 @@ namespace Tools
                     }
 
                     //添加自定义的Cookie
-                    if (CookieStr != String.Empty)
-                    {
-                        myRequest.Headers.Add("Cookie", CookieStr);
-                    }
+                    if (CookieStr != String.Empty) myRequest.Headers.Add("Cookie", CookieStr);
+                    //设置请求Referer信息
+                    if (Referer != String.Empty) myRequest.Referer = Referer;
 
                     //发送数据
                     if (data != String.Empty)
@@ -170,6 +171,7 @@ namespace Tools
             public long SPosition = 0;  //告诉服务器开始下载位置
             public Stream HttpStream;   //文件下载句柄
             public int bt = 1024;   //下载字节数?下载速度
+            public String Referer = String.Empty;
 
             /// <summary>
             /// 委托 回调给使用者下载进度
@@ -288,10 +290,10 @@ namespace Tools
                         return;
                     }
                     HttpWebRequest myRequest = (HttpWebRequest)HttpWebRequest.Create(Url);
-                    if (SPosition > 0)
-                    {
-                        myRequest.AddRange(SPosition);             //设置Range值
-                    }
+
+                    if (SPosition > 0) myRequest.AddRange(SPosition);             //设置Range值
+                    if (Referer != String.Empty) myRequest.Referer = ""; //设置源页面信息 Referer
+
                     HttpStream = myRequest.GetResponse().GetResponseStream();
                     byte[] btContent = new byte[bt];
                     int intSize = 0;
@@ -335,8 +337,9 @@ namespace Tools
             /// 获取远程文件的大小
             /// </summary>
             /// <param name="url"></param>
+            /// <param name="Referer"></param>
             /// <returns></returns>
-            public long GetHttpLength(string url)
+            public static long GetHttpLength(string url, String Referer = null)
             {
                 long length = 0;
                 HttpWebRequest req = null;
@@ -344,6 +347,7 @@ namespace Tools
                 try
                 {
                     req = (HttpWebRequest)HttpWebRequest.Create(url);
+                    if (Referer != null) req.Referer = Referer; //设置请求来源
                     rsp = (HttpWebResponse)req.GetResponse();
                     if (rsp.StatusCode == HttpStatusCode.OK)
                         length = rsp.ContentLength;
@@ -364,7 +368,13 @@ namespace Tools
                 return length;
             }
 
-            public String GetHttpFileName(String url)
+            /// <summary>
+            /// 获取远程将下载文件的文件名
+            /// </summary>
+            /// <param name="url"></param>
+            /// <param name="Referer"></param>
+            /// <returns></returns>
+            public String GetHttpFileName(String url, String Referer = null)
             {
                 String FileName = String.Empty;
                 HttpWebRequest req = null;
@@ -372,6 +382,7 @@ namespace Tools
                 try
                 {
                     req = (HttpWebRequest)HttpWebRequest.Create(url);
+                    if (Referer != null) req.Referer = Referer; //设置请求来源
                     rsp = (HttpWebResponse)req.GetResponse();
                     if (rsp.StatusCode == HttpStatusCode.OK)
                         FileName = rsp.Headers["Content-Disposition"];
@@ -396,7 +407,14 @@ namespace Tools
                 return FileName;
             }
 
-            public static String GetHttpData(string Url)
+
+            /// <summary>
+            /// 获取URL请求的信息数据,用于较小数据的获取，如文本，图片
+            /// </summary>
+            /// <param name="Url"></param>
+            /// <param name="Referer"></param>
+            /// <returns></returns>
+            public static String GetHttpData(string Url,String Referer = null)
             {
                 string strResult = "";
                 try
@@ -404,8 +422,10 @@ namespace Tools
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
                     //声明一个HttpWebRequest请求
-                    request.Timeout = 3000000;
-                    //设置连接超时时间
+                    request.Timeout = 3000000;  //设置连接超时时间
+
+                    if (Referer != null) request.Referer = Referer; //设置请求来源
+
                     request.Headers.Set("Pragma", "no-cache");
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                     if (response.ToString() != "")

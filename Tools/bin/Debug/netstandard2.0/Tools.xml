@@ -185,11 +185,28 @@
             </summary>
             <returns>true:开始下载，False:某种原因没有开始下载</returns>
         </member>
-        <member name="M:Tools.Net.Download.GetHttpLength(System.String)">
+        <member name="M:Tools.Net.Download.GetHttpLength(System.String,System.String)">
             <summary>
             获取远程文件的大小
             </summary>
             <param name="url"></param>
+            <param name="Referer"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Tools.Net.Download.GetHttpFileName(System.String,System.String)">
+            <summary>
+            获取远程将下载文件的文件名
+            </summary>
+            <param name="url"></param>
+            <param name="Referer"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Tools.Net.Download.GetHttpData(System.String,System.String)">
+            <summary>
+            获取URL请求的信息数据,用于较小数据的获取，如文本，图片
+            </summary>
+            <param name="Url"></param>
+            <param name="Referer"></param>
             <returns></returns>
         </member>
         <member name="T:Tools.Error">
