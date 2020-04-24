@@ -165,7 +165,7 @@ namespace Tools
             public String Url;
             public String SavePath; //保存文件的路径，不包含文件名
             public String SaveFile; //保存文件的文件名
-            public String Suffix = ".tools";//默认下载后缀，下载过程中显示的后缀,下载完成移除
+            public String Suffix = ".tooling";//默认下载后缀，下载过程中显示的后缀,下载完成移除
             public long HttpFileSize;   //要下载的文件的总大小
             public Thread Thread;   //调用的线程句柄
             public Fileoperate.WriteFile FileStream;
