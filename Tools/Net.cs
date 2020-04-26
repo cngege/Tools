@@ -17,6 +17,7 @@ namespace Tools
             public String IP = String.Empty;
             public int Port = 6800;
             public String CookieStr = String.Empty;
+            private String ReCookies;   //发生请求之后 获取服务端在流修改设置的Cookie；
             public String Referer = String.Empty;
 
             /// <summary>
@@ -31,6 +32,11 @@ namespace Tools
             public Get(string getUrl = "")
             {
                 GetUrl = getUrl;
+            }
+
+            public String GetCookies()
+            {
+                return ReCookies;
             }
 
             /// <summary>
@@ -64,7 +70,7 @@ namespace Tools
                     }
 
                     //添加自定义的Cookie
-                    if (CookieStr != String.Empty) myRequest.Headers.Add("Cookie", CookieStr);
+                    if (CookieStr != String.Empty) myRequest.Headers.Add("Cookie",CookieStr);
                     //设置请求Referer信息
                     if (Referer != String.Empty) myRequest.Referer = Referer;
                     
@@ -73,12 +79,14 @@ namespace Tools
                     HttpWebResponse myResponse = (HttpWebResponse)myRequest.GetResponse();
                     StreamReader reader = new StreamReader(myResponse.GetResponseStream(), Encoding.UTF8);
                     string content = reader.ReadToEnd();
+                    ReCookies = myResponse.Headers["Set-Cookie"].Replace(", ",";");
+
                     reader.Close();
                     return content;
                 }
                 catch (Exception Ex)
                 {
-                    throw new Error(Ex.GetType().ToString(), Ex.Message);
+                    throw new Error("Tools.NET.Get", Ex.GetType().ToString() + Ex.Message);
                 }
             }
         }
@@ -92,6 +100,7 @@ namespace Tools
             public String IP = String.Empty;
             public int Port = 6800;
             public String Referer = String.Empty;
+            private String ReCookies;   //发生请求之后 获取服务端在流修改设置的Cookie；
 
             /// <summary>
             /// 要和链接一起发送的数据,如:user=123&pass=456
@@ -106,6 +115,11 @@ namespace Tools
             public Post(string getUrl = "")
             {
                 GetUrl = getUrl;
+            }
+
+            public String GetCookies()
+            {
+                return ReCookies;
             }
 
             public String Getdata()
@@ -149,6 +163,8 @@ namespace Tools
                     StreamReader reader = new StreamReader(myResponse.GetResponseStream(), Encoding.UTF8);
 
                     string content = reader.ReadToEnd();
+                    ReCookies = myResponse.Headers["Set-Cookie"].Replace(", ", ";");
+
                     reader.Close();
                     return content;
                 }
