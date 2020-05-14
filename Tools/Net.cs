@@ -14,22 +14,22 @@ namespace Tools
             public String GetUrl;
             public String ContentType = "text/json";
             public String UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0";
-            public String IP = String.Empty;
+            public String IP;
             public int Port = 6800;
-            public String CookieStr = String.Empty;
-            private String ReCookies;   //发生请求之后 获取服务端在流修改设置的Cookie；
-            public String Referer = String.Empty;
+            public String CookieStr;
+            private String ReCookies;   //发生请求之后 获取服务端在流修改设置的Cookie;
+            public String Referer;
 
             /// <summary>
             /// 要和链接一起发送的数据,如:user=123&pass=456
             /// </summary>
-            public String data = String.Empty;
+            public String data;
 
             /// <summary>
             /// 发送网络Get请求
             /// </summary>
             /// <param name="getUrl">请求的URL</param>
-            public Get(string getUrl = "")
+            public Get(string getUrl = null)
             {
                 GetUrl = getUrl;
             }
@@ -45,14 +45,14 @@ namespace Tools
             /// <returns>返回服务器数据</returns>
             public String Getdata()
             {
-                if (GetUrl == String.Empty)
+                if (GetUrl == String.Empty || GetUrl == null)
                 {
                     throw new Error("Tools.NET.Get", "请求连接为空");
                 }
                 try
                 {
                     //整合要传送的数据
-                    if (data != String.Empty)
+                    if (data != null)
                     {
                         GetUrl += "?" + data;
                     }
@@ -63,16 +63,15 @@ namespace Tools
                     myRequest.ContentType = ContentType;
 
                     //需要时添加代理服务器
-                    if (IP != String.Empty)
+                    if (IP != null)
                     {
-                        WebProxy proxyObject = new WebProxy(IP, Port);//代理类
-                        myRequest.Proxy = proxyObject; //设置代理
+                        myRequest.Proxy = new WebProxy(IP, Port); //设置代理
                     }
 
                     //添加自定义的Cookie
-                    if (CookieStr != String.Empty) myRequest.Headers.Add("Cookie",CookieStr);
+                    if (CookieStr != null) myRequest.Headers.Add("Cookie",CookieStr);
                     //设置请求Referer信息
-                    if (Referer != String.Empty) myRequest.Referer = Referer;
+                    if (Referer != null) myRequest.Referer = Referer;
                     
 
                     //获取远程服务器响应
@@ -82,6 +81,7 @@ namespace Tools
                     ReCookies = myResponse.Headers["Set-Cookie"].Replace(", ",";");
 
                     reader.Close();
+                    
                     return content;
                 }
                 catch (Exception Ex)
@@ -97,22 +97,22 @@ namespace Tools
             public String GetUrl;
             public String ContentType = "application/x-www-form-urlencoded";
             public String UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0";
-            public String IP = String.Empty;
+            public String IP;
             public int Port = 6800;
-            public String Referer = String.Empty;
+            public String Referer;
             private String ReCookies;   //发生请求之后 获取服务端在流修改设置的Cookie；
 
             /// <summary>
             /// 要和链接一起发送的数据,如:user=123&pass=456
             /// </summary>
-            public String data = String.Empty;
-            public String CookieStr = String.Empty;
+            public String data;
+            public String CookieStr;
 
             /// <summary>
             /// 发送网络Post请求
             /// </summary>
             /// <param name="getUrl">请求链接地址</param>
-            public Post(string getUrl = "")
+            public Post(string getUrl = null)
             {
                 GetUrl = getUrl;
             }
@@ -124,7 +124,7 @@ namespace Tools
 
             public String Getdata()
             {
-                if (GetUrl == String.Empty)
+                if (GetUrl == String.Empty || GetUrl == null)
                 {
                     throw new Error("Tools.NET.Post", "请求连接为空");
                 }
@@ -137,19 +137,18 @@ namespace Tools
                     myRequest.ContentType = ContentType;
 
                     //需要时添加代理服务器
-                    if (IP != String.Empty)
+                    if (IP != null)
                     {
-                        WebProxy proxyObject = new WebProxy(IP, Port);//代理类
-                        myRequest.Proxy = proxyObject; //设置代理
+                        myRequest.Proxy = new WebProxy(IP, Port); //设置代理
                     }
 
                     //添加自定义的Cookie
-                    if (CookieStr != String.Empty) myRequest.Headers.Add("Cookie", CookieStr);
+                    if (CookieStr != null) myRequest.Headers.Add("Cookie", CookieStr);
                     //设置请求Referer信息
-                    if (Referer != String.Empty) myRequest.Referer = Referer;
+                    if (Referer != null) myRequest.Referer = Referer;
 
                     //发送数据
-                    if (data != String.Empty)
+                    if (data != null)
                     {
                         byte[] _data = Encoding.UTF8.GetBytes(this.data);
                         myRequest.ContentLength = _data.Length;
@@ -170,7 +169,7 @@ namespace Tools
                 }
                 catch (Exception Ex)
                 {
-                    throw new Error(Ex.GetType().ToString(), Ex.Message);
+                    throw new Error("Tools.NET.Post", Ex.GetType().ToString() + Ex.Message);
                 }
             }
         }
@@ -514,7 +513,7 @@ namespace Tools
             }
 
         }
-
-
+        
+        
     }
 }
