@@ -40,7 +40,7 @@ namespace Tools
                 }
                 if (File.Exists(_Path) == false)
                 {
-                    File.Create(_Path);//如果文件不存在 则创建这个文件
+                    File.Create(_Path).Close();//如果文件不存在 则创建这个文件
                 }
             }
 
