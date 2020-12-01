@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>key.pfx</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>E:\小桌面\C#\Tools\Tools\bin\Debug\netstandard2.1\Tools.xml</DocumentationFile>
+    <DocumentationFile>E:\小桌面\C#\Tools\Tools\bin\Debug\netstandard2.0\Tools.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
