@@ -44,7 +44,12 @@ namespace Tools
 
         public class MCPE
         {
-
+            /// <summary>
+            /// 探测服务器
+            /// </summary>
+            /// <param name="ip">服务器IP,v4或v6,域名默认v4</param>
+            /// <param name="port">基岩版服务器端口</param>
+            /// <returns>返回包含数据的MCPEdata类</returns>
             public static MCPEData Ping(string ip, int port)
             {
                 Socket client;
