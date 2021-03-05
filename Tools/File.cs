@@ -1,8 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 using System.Text;
+
 
 namespace Tools
 {
@@ -32,6 +33,10 @@ namespace Tools
                 }
             }
 
+            /// <summary>
+            /// 检查文件路径,文件或路径不存在则创建
+            /// </summary>
+            /// <param name="_Path"></param>
             private static void CheckPath(String _Path)
             {
                 if (Directory.Exists(Path.GetDirectoryName(_Path)) == false)
@@ -197,9 +202,18 @@ namespace Tools
         }
 
 
+        public class FileSys
+        {
+            /// <summary>
+            /// 获取运行路径
+            /// </summary>
+            /// <returns>返回路径字符串反斜杠结尾</returns>
+            public static string GetPath()
+            {
+                return Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory);
+            }
+        }
 
     }
-
-
 
 }
