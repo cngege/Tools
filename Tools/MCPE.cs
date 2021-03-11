@@ -131,7 +131,7 @@ namespace Tools
                     string message = Encoding.UTF8.GetString(buffer, 0, length);
                     message = GetRight(message, "MCPE");
                     string[] data = message.Split(new[] { ";" }, StringSplitOptions.None);
-
+                    client.Close();
 
                     if (!int.TryParse(data[2], out int agreement))
                     {
