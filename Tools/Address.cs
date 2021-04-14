@@ -49,7 +49,7 @@ namespace Tools
             /// <param name="pid">进程Pid</param>
             /// <param name="AddrSize">读取的内存大小</param>
             /// <returns>返回的内存值</returns>
-            public static int ReadValue(int address, int pid, int AddrSize = 4)
+            public static int ReadValue(IntPtr address, int pid, int AddrSize = 4)
             {
                 try
                 {
@@ -58,7 +58,7 @@ namespace Tools
                     //打开一个已存在的进程对象  0x1F0FFF 最高权限
                     IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
                     //将制定内存中的值读入缓冲区
-                    ReadProcessMemory(hProcess, (IntPtr)address, byteAddress, AddrSize, IntPtr.Zero);
+                    ReadProcessMemory(hProcess, address, byteAddress, AddrSize, IntPtr.Zero);
                     //关闭操作
                     CloseHandle(hProcess);
                     //从非托管内存中读取一个 32 位带符号整数。
@@ -77,12 +77,12 @@ namespace Tools
             /// <param name="value">写入的内存值</param>
             /// <param name="pid">进程pid</param>
             /// <param name="AddrSize">写入的地址大小</param>
-            public static void WriteValue(int address, int value, int pid, int AddrSize = 4)
+            public static void WriteValue(IntPtr address, int value, int pid, int AddrSize = 4)
             {
                 //打开一个已存在的进程对象  0x1F0FFF 最高权限
                 IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
                 //从指定内存中写入字节集数据
-                WriteProcessMemory(hProcess, (IntPtr)address, new int[] { value }, AddrSize, IntPtr.Zero);
+                WriteProcessMemory(hProcess, address, new int[] { value }, AddrSize, IntPtr.Zero);
                 //关闭操作
                 CloseHandle(hProcess);
             }
