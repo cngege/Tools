@@ -71,6 +71,34 @@ namespace Tools
             }
 
             /// <summary>
+            /// 读内存长整数
+            /// </summary>
+            /// <param name="address">内存地址</param>
+            /// <param name="pid">进程Pid</param>
+            /// <param name="AddrSize">读取的内存大小</param>
+            /// <returns>返回的内存值</returns>
+            public static long ReadValue64(IntPtr address, int pid, int AddrSize = 4)
+            {
+                try
+                {
+                    byte[] buffer = new byte[4];
+                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
+                    //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                    IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                    //将制定内存中的值读入缓冲区
+                    ReadProcessMemory(hProcess, address, byteAddress, AddrSize, IntPtr.Zero);
+                    //关闭操作
+                    CloseHandle(hProcess);
+                    //从非托管内存中读取一个 64 位带符号整数。
+                    return Marshal.ReadInt64(byteAddress);
+                }
+                catch
+                {
+                    return 0;
+                }
+            }
+
+            /// <summary>
             /// 写内存
             /// </summary>
             /// <param name="address">内存地址</param>
@@ -85,6 +113,60 @@ namespace Tools
                 WriteProcessMemory(hProcess, address, new int[] { value }, AddrSize, IntPtr.Zero);
                 //关闭操作
                 CloseHandle(hProcess);
+            }
+
+            /// <summary>
+            /// 内存搜索特征码
+            /// 可能会卡死数分钟，考虑在线程中操作
+            /// </summary>
+            /// <param name="startAddress">开始查询地址,一般为基址</param>
+            /// <param name="pid">程序Pid</param>
+            /// <param name="memoryBlock">特征码</param>
+            /// <returns>返回符合的特征码的第一个数的地址指针</returns>
+            public static IntPtr MemoryQuery(IntPtr startAddress, int pid, int[] memoryBlock)
+            {
+                int val = 0;
+                IntPtr naddr = startAddress,
+                       retaddr = IntPtr.Zero;
+                IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+
+                while (true)
+                {
+                    byte[] buffer = new byte[4];
+                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
+                    ReadProcessMemory(hProcess, naddr, byteAddress, 1, IntPtr.Zero);
+
+                    if (Marshal.ReadInt32(byteAddress) == memoryBlock[val])
+                    {
+                        if (val == 0)
+                        {
+                            retaddr = naddr;
+                        }
+                        if (val < memoryBlock.Length - 1)
+                        {
+                            val++;
+                            naddr = IntPtr.Add(naddr, 1);
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        val = 0;
+                        naddr = IntPtr.Add(naddr, 1);
+                        retaddr = IntPtr.Zero;
+                    }
+                    if ((naddr.ToInt64() - startAddress.ToInt64()) > 0xFFFFFFFF)
+                    {
+                        retaddr = IntPtr.Zero;
+                        break;
+                    }
+                }
+                CloseHandle(hProcess);
+                return retaddr;
+
             }
         }
     }
