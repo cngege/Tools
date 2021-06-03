@@ -27,6 +27,10 @@ namespace Tools
             [DllImport("kernel32.dll")]
             private static extern void CloseHandle(IntPtr hObject);
 
+            //获取模块的基址 null获取本模块(??主程序??)
+            [DllImport("Kernel32.dll")]
+            public static extern IntPtr GetModuleHandleA(string moudle);
+
             /// <summary>
             /// 进程名获取Pid
             /// </summary>
@@ -43,6 +47,33 @@ namespace Tools
             }
 
             /// <summary>
+            /// 获取模块地址
+            /// </summary>
+            /// <param name="pid">有效的pid</param>
+            /// <param name="module">为空时获取主exe程序的基址</param>
+            /// <returns></returns>
+            public static IntPtr GetModuleAddr(int pid, string module = null)
+            {
+                Process ps = Process.GetProcessById(pid);
+                if (module == null)
+                {
+                    return ps.MainModule.BaseAddress;
+                }
+                else
+                {
+                    for (int i = 0; i < ps.Modules.Count; i++)
+                    {
+
+                        if (ps.Modules[i].ModuleName == module)
+                        {
+                            return ps.Modules[i].BaseAddress;
+                        }
+                    }
+                    return IntPtr.Zero;
+                }
+            }
+
+            /// <summary>
             /// 读内存
             /// </summary>
             /// <param name="address">内存地址</param>
@@ -53,7 +84,7 @@ namespace Tools
             {
                 try
                 {
-                    byte[] buffer = new byte[4];
+                    byte[] buffer = new byte[AddrSize];
                     IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
                     //打开一个已存在的进程对象  0x1F0FFF 最高权限
                     IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
@@ -81,7 +112,7 @@ namespace Tools
             {
                 try
                 {
-                    byte[] buffer = new byte[4];
+                    byte[] buffer = new byte[AddrSize];
                     IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
                     //打开一个已存在的进程对象  0x1F0FFF 最高权限
                     IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
@@ -116,8 +147,8 @@ namespace Tools
             }
 
             /// <summary>
-            /// 内存搜索特征码
-            /// 可能会卡死数分钟，考虑在线程中操作
+            /// 内存快速搜索特征码
+            /// 考虑在线程中操作
             /// </summary>
             /// <param name="startAddress">开始查询地址,一般为基址</param>
             /// <param name="pid">程序Pid</param>
@@ -125,48 +156,112 @@ namespace Tools
             /// <returns>返回符合的特征码的第一个数的地址指针</returns>
             public static IntPtr MemoryQuery(IntPtr startAddress, int pid, int[] memoryBlock)
             {
-                int val = 0;
-                IntPtr naddr = startAddress,
-                       retaddr = IntPtr.Zero;
-                IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
-
-                while (true)
+                IntPtr naddr = startAddress;
+                try
                 {
-                    byte[] buffer = new byte[4];
-                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
-                    ReadProcessMemory(hProcess, naddr, byteAddress, 1, IntPtr.Zero);
+                    int count = 20480;
 
-                    if (Marshal.ReadInt32(byteAddress) == memoryBlock[val])
+                    byte[] bffarray = new byte[count];
+                    IntPtr bffAddress = Marshal.UnsafeAddrOfPinnedArrayElement(bffarray, 0);
+                    //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                    IntPtr Process = OpenProcess(0x1F0FFF, false, pid);
+                    //将制定内存中的值读入缓冲区
+
+                    while (true)
                     {
-                        if (val == 0)
+
+                        ReadProcessMemory(Process, naddr, bffAddress, count, IntPtr.Zero);   //读取并存入缓冲区
+                        for (int i = 0; i < bffarray.Length; i++)
                         {
-                            retaddr = naddr;
+                            if (bffarray[i] == memoryBlock[0])
+                            {
+                                if (count - i >= memoryBlock.Length)     //不是在bffarray末尾匹配到的
+                                {
+                                    for (int j = 0; j < memoryBlock.Length; j++)
+                                    {
+                                        if (memoryBlock[j] != bffarray[i + j])
+                                        {
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            if (j == memoryBlock.Length - 1)
+                                            {
+                                                CloseHandle(Process);
+                                                //找到了
+                                                return IntPtr.Add(naddr, i);
+                                            }
+                                        }
+                                        //到这里表示 找到了第一个值 但后面的值不匹配
+                                    }
+                                }
+                                else
+                                {
+                                    //表示 这是在bffarray最后几个元素中找到的 确定了匹配的值不够
+                                    byte[] bffarray2 = new byte[memoryBlock.Length];
+                                    IntPtr bffAddress2 = Marshal.UnsafeAddrOfPinnedArrayElement(bffarray2, 0);
+                                    ReadProcessMemory(Process, IntPtr.Add(naddr, count), bffAddress2, memoryBlock.Length, IntPtr.Zero);   //读取并存入缓冲区
+
+                                    for (int j = 0; j < memoryBlock.Length; j++)
+                                    {
+                                        if (i + j <= count - 1)
+                                        {
+                                            if (memoryBlock[j] != bffarray[i + j])
+                                            {
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                if (j == memoryBlock.Length - 1)
+                                                {
+                                                    CloseHandle(Process);
+                                                    //找到了
+                                                    return IntPtr.Add(naddr, i);
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            //1 2 3 4 5
+                                            //          6 7 8 9 10
+                                            //  2 3 4 5 6 7
+                                            //count = 6
+                                            //i = 1   j - (count - i - 1)
+                                            //j = 4   4 - (6 - 1 - 1) = 0
+                                            //    6 == 6 true
+                                            //j = 5   5 - (6 - 1 - 1) = 1
+                                            //    7 == 7 true
+                                            if (memoryBlock[j] != bffarray2[j - (count - 1 - i)])
+                                            {
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                if (j == memoryBlock.Length - 1)
+                                                {
+                                                    CloseHandle(Process);
+                                                    //找到了
+                                                    return IntPtr.Add(naddr, i);
+                                                }
+                                            }
+                                        }
+
+                                    }
+                                }
+                            }
                         }
-                        if (val < memoryBlock.Length - 1)
+                        if ((naddr.ToInt64() - startAddress.ToInt64()) > 0xFFFFFFFF)
                         {
-                            val++;
-                            naddr = IntPtr.Add(naddr, 1);
+                            CloseHandle(Process);
+                            return IntPtr.Zero;
                         }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        val = 0;
-                        naddr = IntPtr.Add(naddr, 1);
-                        retaddr = IntPtr.Zero;
-                    }
-                    if ((naddr.ToInt64() - startAddress.ToInt64()) > 0xFFFFFFFF)
-                    {
-                        retaddr = IntPtr.Zero;
-                        break;
+                        naddr = IntPtr.Add(naddr, count);
                     }
                 }
-                CloseHandle(hProcess);
-                return retaddr;
-
+                catch
+                {
+                    return IntPtr.Zero;
+                }
             }
         }
     }
