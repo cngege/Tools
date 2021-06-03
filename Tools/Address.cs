@@ -146,20 +146,49 @@ namespace Tools
                 CloseHandle(hProcess);
             }
 
+
             /// <summary>
-            /// 内存快速搜索特征码
-            /// 考虑在线程中操作
+            /// 内存搜索
             /// </summary>
-            /// <param name="startAddress">开始查询地址,一般为基址</param>
-            /// <param name="pid">程序Pid</param>
-            /// <param name="memoryBlock">特征码</param>
-            /// <returns>返回符合的特征码的第一个数的地址指针</returns>
-            public static IntPtr MemoryQuery(IntPtr startAddress, int pid, int[] memoryBlock)
+            /// <param name="pid"></param>
+            /// <param name="memoryBlock"></param>
+            /// <param name="moudlename">要内存搜索的模块名,如果空则为主程序</param>
+            /// <returns>返回匹配的内存地址数组</returns>
+            public static IntPtr[] MemoryQuery(int pid, int[] memoryBlock, string moudlename = null)
             {
+                Process ps = Process.GetProcessById(pid);
+                IntPtr startAddress = IntPtr.Zero;
+                int moudlesize = 0;
+                if (moudlename == null)
+                {
+                    startAddress = ps.MainModule.BaseAddress;
+                    moudlesize = ps.MainModule.ModuleMemorySize;
+                }
+                else
+                {
+                    for (int i = 0; i < ps.Modules.Count; i++)
+                    {
+                        if (ps.Modules[i].ModuleName == moudlename)
+                        {
+                            startAddress = ps.Modules[i].BaseAddress;
+                            moudlesize = ps.Modules[i].ModuleMemorySize;
+                            break;
+                        }
+                    }
+                    if (moudlesize == 0)
+                    {
+                        ps.Close();
+                        return new IntPtr[] { };
+                    }
+                }
+
+
+                ps.Close();
                 IntPtr naddr = startAddress;
+                List<IntPtr> value = new List<IntPtr>();
                 try
                 {
-                    int count = 20480;
+                    int count = 4096000;
 
                     byte[] bffarray = new byte[count];
                     IntPtr bffAddress = Marshal.UnsafeAddrOfPinnedArrayElement(bffarray, 0);
@@ -187,9 +216,8 @@ namespace Tools
                                         {
                                             if (j == memoryBlock.Length - 1)
                                             {
-                                                CloseHandle(Process);
                                                 //找到了
-                                                return IntPtr.Add(naddr, i);
+                                                value.Add(IntPtr.Add(naddr, i));
                                             }
                                         }
                                         //到这里表示 找到了第一个值 但后面的值不匹配
@@ -204,7 +232,7 @@ namespace Tools
 
                                     for (int j = 0; j < memoryBlock.Length; j++)
                                     {
-                                        if (i + j <= count - 1)
+                                        if (i + j <= count - 1)                             //还没超出第一个数组范围
                                         {
                                             if (memoryBlock[j] != bffarray[i + j])
                                             {
@@ -214,9 +242,8 @@ namespace Tools
                                             {
                                                 if (j == memoryBlock.Length - 1)
                                                 {
-                                                    CloseHandle(Process);
                                                     //找到了
-                                                    return IntPtr.Add(naddr, i);
+                                                    value.Add(IntPtr.Add(naddr, i));
                                                 }
                                             }
                                         }
@@ -239,9 +266,8 @@ namespace Tools
                                             {
                                                 if (j == memoryBlock.Length - 1)
                                                 {
-                                                    CloseHandle(Process);
                                                     //找到了
-                                                    return IntPtr.Add(naddr, i);
+                                                    value.Add(IntPtr.Add(naddr, i));
                                                 }
                                             }
                                         }
@@ -250,17 +276,19 @@ namespace Tools
                                 }
                             }
                         }
-                        if ((naddr.ToInt64() - startAddress.ToInt64()) > 0xFFFFFFFF)
+                        //if ((naddr.ToInt64() - startAddress.ToInt64()) > 0xFFFFFFFF)
+                        if ((naddr.ToInt64() - startAddress.ToInt64()) > moudlesize)
                         {
                             CloseHandle(Process);
-                            return IntPtr.Zero;
+                            return value.ToArray();
                         }
                         naddr = IntPtr.Add(naddr, count);
                     }
                 }
-                catch
+                catch (Exception e)
                 {
-                    return IntPtr.Zero;
+                    Console.WriteLine(e.StackTrace + "\n" + e.Message);
+                    return value.ToArray();
                 }
             }
         }
