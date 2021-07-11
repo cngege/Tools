@@ -481,21 +481,27 @@ namespace Tools
             /// 获取URL请求的信息数据,用于较小数据的获取，如文本，图片
             /// </summary>
             /// <param name="Url"></param>
-            /// <param name="Referer"></param>
+            /// <param name="Headers"></param>
             /// <returns></returns>
-            public static String GetHttpData(string Url,String Referer = null)
+            public static String GetHttpData(string Url,WebHeaderCollection Headers = null)
             {
                 string strResult = "";
+                
                 try
                 {
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
                     //声明一个HttpWebRequest请求
-                    request.Timeout = 3000000;  //设置连接超时时间
-
-                    if (Referer != null) request.Referer = Referer; //设置请求来源
-
-                    request.Headers.Set("Pragma", "no-cache");
+                    request.Timeout = 30*1000;  //设置连接超时时间
+                    if (Headers != null)
+                    {
+                        request.Headers = Headers;
+                    }
+                    else
+                    {
+                        request.Headers.Set("Pragma", "no-cache");
+                    }
+                    request.Method = "GET";
                     HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                     if (response.ToString() != "")
                     {
