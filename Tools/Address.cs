@@ -17,7 +17,7 @@ namespace Tools
 
             //从指定内存中写入字节集数据
             [DllImportAttribute("kernel32.dll", EntryPoint = "WriteProcessMemory")]
-            public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, int[] lpBuffer, int nSize, IntPtr lpNumberOfBytesWritten);
+            public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int nSize, IntPtr lpNumberOfBytesWritten);
 
             //打开一个已存在的进程对象，并返回进程的句柄
             [DllImportAttribute("kernel32.dll", EntryPoint = "OpenProcess")]
@@ -130,6 +130,146 @@ namespace Tools
             }
 
             /// <summary>
+            /// 读内存单精度浮点数
+            /// </summary>
+            /// <param name="address"></param>
+            /// <param name="pid"></param>
+            /// <returns></returns>
+            public static float ReadValue_float(IntPtr address, int pid)
+            {
+                try
+                {
+                    byte[] buffer = new byte[4];
+                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
+                    //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                    IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                    //将制定内存中的值读入缓冲区
+                    ReadProcessMemory(hProcess, address, byteAddress, 4, IntPtr.Zero);
+                    //关闭操作
+                    CloseHandle(hProcess);
+                    //从非托管内存中读取一个 单精度浮点数。
+                    return BitConverter.ToSingle(buffer, 0);
+                }
+                catch
+                {
+                    return 0;
+                }
+            }
+
+            /// <summary>
+            /// 读双精度浮点数
+            /// </summary>
+            /// <param name="address"></param>
+            /// <param name="pid"></param>
+            /// <returns></returns>
+            public static double ReadValue_double(IntPtr address, int pid)
+            {
+                try
+                {
+                    byte[] buffer = new byte[8];
+                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
+                    //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                    IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                    //将制定内存中的值读入缓冲区
+                    ReadProcessMemory(hProcess, address, byteAddress, 8, IntPtr.Zero);
+                    //关闭操作
+                    CloseHandle(hProcess);
+                    //从非托管内存中读取一个 双精度浮点数
+                    return BitConverter.ToDouble(buffer, 0);
+                }
+                catch
+                {
+                    return 0;
+                }
+            }
+
+            /// <summary>
+            /// 取内存指针
+            /// </summary>
+            /// <param name="address"></param>
+            /// <param name="pid"></param>
+            /// <param name="ofs">取前偏移</param>
+            /// <returns></returns>
+            public static IntPtr ReadValue_IntPtr(IntPtr address, int pid,int ofs = 0)
+            {
+                try
+                {
+                    byte[] buffer = new byte[4];
+                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
+                    //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                    IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                    //将制定内存中的值读入缓冲区
+                    if (ofs != 0)
+                    {
+                        address = IntPtr.Add(address, ofs);
+                    }
+                    ReadProcessMemory(hProcess, address, byteAddress, 4, IntPtr.Zero);
+                    //关闭操作
+                    CloseHandle(hProcess);
+                    //从非托管内存中读取一个 指针
+                    return Marshal.ReadIntPtr(byteAddress);
+                }
+                catch
+                {
+                    return IntPtr.Zero;
+                }
+            }
+
+            /// <summary>
+            /// 取内存指针64位
+            /// </summary>
+            /// <param name="address"></param>
+            /// <param name="pid"></param>
+            /// <param name="ofs">取前偏移</param>
+            /// <returns></returns>
+            public static IntPtr ReadValue_IntPtr64(IntPtr address, int pid, int ofs = 0)
+            {
+                try
+                {
+                    byte[] buffer = new byte[8];
+                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
+                    //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                    IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                    //将制定内存中的值读入缓冲区
+                    if (ofs != 0)
+                    {
+                        address = IntPtr.Add(address, ofs);
+                    }
+                    ReadProcessMemory(hProcess, address, byteAddress, 8, IntPtr.Zero);
+                    //关闭操作
+                    CloseHandle(hProcess);
+                    //从非托管内存中读取一个 指针
+                    return Marshal.ReadIntPtr(byteAddress);
+                }
+                catch
+                {
+                    return IntPtr.Zero;
+                }
+            }
+
+            /// <summary>
+            /// 写单精度浮点数
+            /// </summary>
+            /// <param name="address"></param>
+            /// <param name="value"></param>
+            /// <param name="pid"></param>
+            public static void WriteValue_float(IntPtr address, float value, int pid)
+            {
+                //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                byte[] b = BitConverter.GetBytes(value);
+                int[] i = new int[4];
+                for (int p=0;p<b.Length;p++)
+                {
+                    i[p] = (int)b[p];
+                }
+                //从指定内存中写入字节集数据
+                WriteProcessMemory(hProcess, address, b, 4, IntPtr.Zero);
+                //关闭操作
+                CloseHandle(hProcess);
+            }
+
+            /// <summary>
             /// 写内存
             /// </summary>
             /// <param name="address">内存地址</param>
@@ -141,14 +281,14 @@ namespace Tools
                 //打开一个已存在的进程对象  0x1F0FFF 最高权限
                 IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
                 //从指定内存中写入字节集数据
-                WriteProcessMemory(hProcess, address, new int[] { value }, AddrSize, IntPtr.Zero);
+                WriteProcessMemory(hProcess, address, BitConverter.GetBytes(value), AddrSize, IntPtr.Zero);
                 //关闭操作
                 CloseHandle(hProcess);
             }
 
 
             /// <summary>
-            /// 内存搜索
+            /// 内存搜索 支持模糊搜索
             /// </summary>
             /// <param name="pid"></param>
             /// <param name="memoryBlock"></param>
@@ -208,13 +348,13 @@ namespace Tools
                                 {
                                     for (int j = 0; j < memoryBlock.Length; j++)
                                     {
-                                        if (memoryBlock[j] != bffarray[i + j])
+                                        if (memoryBlock[j] != -1 && memoryBlock[j] != bffarray[i + j])  //!= -1 模糊搜索
                                         {
                                             break;
                                         }
                                         else
                                         {
-                                            if (j == memoryBlock.Length - 1)
+                                            if (j == memoryBlock.Length - 1)    // 表示符合的已经是数组最后一个了 表示全符合
                                             {
                                                 //找到了
                                                 value.Add(IntPtr.Add(naddr, i));
@@ -234,7 +374,7 @@ namespace Tools
                                     {
                                         if (i + j <= count - 1)                             //还没超出第一个数组范围
                                         {
-                                            if (memoryBlock[j] != bffarray[i + j])
+                                            if (memoryBlock[j] != -1 && memoryBlock[j] != bffarray[i + j])
                                             {
                                                 break;
                                             }
@@ -258,7 +398,7 @@ namespace Tools
                                             //    6 == 6 true
                                             //j = 5   5 - (6 - 1 - 1) = 1
                                             //    7 == 7 true
-                                            if (memoryBlock[j] != bffarray2[j - (count - 1 - i)])
+                                            if (memoryBlock[j] != -1 && memoryBlock[j] != bffarray2[j - (count - 1 - i)])
                                             {
                                                 break;
                                             }
@@ -276,9 +416,10 @@ namespace Tools
                                 }
                             }
                         }
-                        //if ((naddr.ToInt64() - startAddress.ToInt64()) > 0xFFFFFFFF)
+                        //if ((naddr.ToInt64() - startAddress.ToInt64()) > 0x7FFFFFFFFFFFFFFF)
                         if ((naddr.ToInt64() - startAddress.ToInt64()) > moudlesize)
                         {
+                            //System.Windows.Forms.MessageBox.Show(((Int64)IntPtr.Add(startAddress,moudlesize)).ToString("x16"));
                             CloseHandle(Process);
                             return value.ToArray();
                         }
@@ -291,6 +432,31 @@ namespace Tools
                     return value.ToArray();
                 }
             }
+
+            /// <summary>
+            /// 将 0F 00 05 11 ?? FF 此类的16进制字符串转化为int数组,以便内存查询
+            /// </summary>
+            /// <param name="memory"></param>
+            /// <returns></returns>
+            public static int[] Memory_Parse(string memory)
+            {
+                string[] moy = memory.Split(' ');
+                int[] intmoy = new int[moy.Length];
+                for (int i = 0; i < moy.Length; i++)
+                {
+                    if (moy[i] == "??")
+                    {
+                        intmoy[i] = -1;
+                    }
+                    else
+                    {
+                        intmoy[i] = Convert.ToInt32("0x"+moy[i],16);
+                    }
+                }
+                return intmoy;
+            }
+
+
         }
     }
 }
