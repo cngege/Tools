@@ -74,6 +74,18 @@ namespace Tools
             }
 
         }
+    
+        public class MouseHook
+        {
+            //模拟鼠标右键按下 
+            public static int MOUSEEVENTF_RIGHTDOWN = 0x0008;
+            //模拟鼠标右键抬起 
+            public static int MOUSEEVENTF_RIGHTUP = 0x0010;
+
+            [System.Runtime.InteropServices.DllImport("user32")]
+            public static extern int mouse_event(int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
+        }
+
     }
 
 }

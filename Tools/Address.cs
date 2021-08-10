@@ -247,6 +247,27 @@ namespace Tools
                 }
             }
 
+            public static byte[] ReadValue_bytes(IntPtr address, int pid, int len)
+            {
+                try
+                {
+                    byte[] buffer = new byte[len];
+                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
+                    //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                    IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                    //将制定内存中的值读入缓冲区
+                    ReadProcessMemory(hProcess, address, byteAddress, len, IntPtr.Zero);
+                    //关闭操作
+                    CloseHandle(hProcess);
+                    //从非托管内存中读取一个 指针
+                    return buffer;
+                }
+                catch
+                {
+                    return new byte[] { };
+                }
+            }
+
             /// <summary>
             /// 写单精度浮点数
             /// </summary>
@@ -265,6 +286,16 @@ namespace Tools
                 }
                 //从指定内存中写入字节集数据
                 WriteProcessMemory(hProcess, address, b, 4, IntPtr.Zero);
+                //关闭操作
+                CloseHandle(hProcess);
+            }
+
+            public static void WriteValue_bytes(IntPtr address, byte[] value, int pid)
+            {
+                //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                //从指定内存中写入字节集数据
+                WriteProcessMemory(hProcess, address, value, value.Length, IntPtr.Zero);
                 //关闭操作
                 CloseHandle(hProcess);
             }
@@ -328,7 +359,8 @@ namespace Tools
                 List<IntPtr> value = new List<IntPtr>();
                 try
                 {
-                    int count = 4096000;
+                    //int count = 4096000;
+                    int count = moudlesize;
 
                     byte[] bffarray = new byte[count];
                     IntPtr bffAddress = Marshal.UnsafeAddrOfPinnedArrayElement(bffarray, 0);
@@ -444,7 +476,7 @@ namespace Tools
                 int[] intmoy = new int[moy.Length];
                 for (int i = 0; i < moy.Length; i++)
                 {
-                    if (moy[i] == "??")
+                    if (moy[i] == "??" || moy[i] == "?")
                     {
                         intmoy[i] = -1;
                     }
