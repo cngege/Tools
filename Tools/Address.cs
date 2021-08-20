@@ -11,6 +11,30 @@ namespace Tools
     {
         public class Address
         {
+            public struct MEMORY_BASIC_INFORMATION
+            {
+                public int BaseAddress;
+                public int AllocationBase;
+                public int AllocationProtect;
+                public int RegionSize;      //区域大小
+                public int State;           //状态
+                public int Protect;         //保护类型
+                public int lType;
+            }
+
+            public const int MEM_COMMIT = 0x1000;       //已物理分配
+            public const int PAGE_READONLY = 0x02;      //只读
+            public const int PAGE_READWRITE = 0x04;     //可读写内存
+
+            //向远程进程申请一段内存
+            [DllImport("kernel32.dll")]
+            public static extern int VirtualAllocEx(IntPtr hwnd, Int32 lpaddress, int size, int type, Int32 tect);
+
+            [DllImport("kernel32.dll")]
+            public static extern bool VirtualProtectEx(IntPtr hwnd, IntPtr lpaddress, int dwsize, int flNewProtect,ref int lpflOldProtect);
+            //查询内存块信息
+            [DllImport("kernel32.dll")]
+            public static extern int VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, int dwLength);
             //从指定内存中读取字节集数据
             [DllImportAttribute("kernel32.dll", EntryPoint = "ReadProcessMemory")]
             public static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int nSize, IntPtr lpNumberOfBytesRead);
@@ -25,7 +49,7 @@ namespace Tools
 
             //关闭一个内核对象。其中包括文件、文件映射、进程、线程、安全和同步对象等。
             [DllImport("kernel32.dll")]
-            private static extern void CloseHandle(IntPtr hObject);
+            public static extern void CloseHandle(IntPtr hObject);
 
             //获取模块的基址 null获取本模块(??主程序??)
             [DllImport("Kernel32.dll")]
@@ -58,6 +82,7 @@ namespace Tools
                 if (module == null)
                 {
                     return ps.MainModule.BaseAddress;
+                    //return ps.MainModule.EntryPointAddress;
                 }
                 else
                 {
@@ -278,14 +303,20 @@ namespace Tools
             {
                 //打开一个已存在的进程对象  0x1F0FFF 最高权限
                 IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
-                byte[] b = BitConverter.GetBytes(value);
+                int virtue = 0;
+                bool b = VirtualProtectEx(hProcess, address, sizeof(float), PAGE_READWRITE, ref virtue);
+                byte[] _byte = BitConverter.GetBytes(value);
                 int[] i = new int[4];
-                for (int p=0;p<b.Length;p++)
+                for (int p=0;p<_byte.Length;p++)
                 {
-                    i[p] = (int)b[p];
+                    i[p] = (int)_byte[p];
                 }
                 //从指定内存中写入字节集数据
-                WriteProcessMemory(hProcess, address, b, 4, IntPtr.Zero);
+                WriteProcessMemory(hProcess, address, _byte, 4, IntPtr.Zero);
+                if (b)
+                {
+                    VirtualProtectEx(hProcess, address, sizeof(float), virtue, ref virtue);
+                }
                 //关闭操作
                 CloseHandle(hProcess);
             }
@@ -294,10 +325,17 @@ namespace Tools
             {
                 //打开一个已存在的进程对象  0x1F0FFF 最高权限
                 IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                int virtue = 0;
+                bool b = VirtualProtectEx(hProcess,address,value.Length, PAGE_READWRITE,ref virtue);
                 //从指定内存中写入字节集数据
                 WriteProcessMemory(hProcess, address, value, value.Length, IntPtr.Zero);
+                if (b)
+                {
+                    VirtualProtectEx(hProcess, address, value.Length, virtue, ref virtue);
+                }
                 //关闭操作
                 CloseHandle(hProcess);
+                
             }
 
             /// <summary>
@@ -311,8 +349,14 @@ namespace Tools
             {
                 //打开一个已存在的进程对象  0x1F0FFF 最高权限
                 IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                int virtue = 0;
+                bool b = VirtualProtectEx(hProcess, address, sizeof(int), PAGE_READWRITE, ref virtue);
                 //从指定内存中写入字节集数据
                 WriteProcessMemory(hProcess, address, BitConverter.GetBytes(value), AddrSize, IntPtr.Zero);
+                if (b)
+                {
+                    VirtualProtectEx(hProcess, address, sizeof(int), virtue, ref virtue);
+                }
                 //关闭操作
                 CloseHandle(hProcess);
             }
@@ -448,7 +492,7 @@ namespace Tools
                                 }
                             }
                         }
-                        //if ((naddr.ToInt64() - startAddress.ToInt64()) > 0x7FFFFFFFFFFFFFFF)
+                        //if (naddr.ToInt64() > 0x7FFFFFFFFFFFFFFF)
                         if ((naddr.ToInt64() - startAddress.ToInt64()) > moudlesize)
                         {
                             //System.Windows.Forms.MessageBox.Show(((Int64)IntPtr.Add(startAddress,moudlesize)).ToString("x16"));
@@ -460,7 +504,7 @@ namespace Tools
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.StackTrace + "\n" + e.Message);
+                    //System.Windows.Forms.MessageBox.Show(e.StackTrace + "\n" + e.Message);
                     return value.ToArray();
                 }
             }
@@ -488,6 +532,28 @@ namespace Tools
                 return intmoy;
             }
 
+            /// <summary>
+            /// 将 0F 00 05 11 ?? FF 此类的16进制字符串转化为字节数组,以便内存查询
+            /// </summary>
+            /// <param name="memory"></param>
+            /// <returns></returns>
+            public static byte[] Memory_byteParse(string memory)
+            {
+                string[] moy = memory.Split(' ');
+                byte[] intmoy = new byte[moy.Length];
+                for (int i = 0; i < moy.Length; i++)
+                {
+                    if (moy[i] == "??" || moy[i] == "?")
+                    {
+                        throw new Error("Address.Address.Memory_Parse","反序列化特征码到字节数组不支持模糊字符[??]");
+                    }
+                    else
+                    {
+                        intmoy[i] = (byte)Convert.ToInt32("0x" + moy[i], 16);
+                    }
+                }
+                return intmoy;
+            }
 
         }
     }
