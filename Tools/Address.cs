@@ -13,8 +13,8 @@ namespace Tools
         {
             public struct MEMORY_BASIC_INFORMATION
             {
-                public int BaseAddress;
-                public int AllocationBase;
+                public IntPtr BaseAddress;
+                public IntPtr AllocationBase;
                 public int AllocationProtect;
                 public int RegionSize;      //区域大小
                 public int State;           //状态
@@ -23,12 +23,33 @@ namespace Tools
             }
 
             public const int MEM_COMMIT = 0x1000;       //已物理分配
+            public const int MEM_PHYSICAL = 0x400000;
+            public const int MEM_RESERVE = 0x2000;
+            public const int MEM_DECOMMIT = 0x4000;
+            public const int MEM_RELEASE = 0x8000;
+            public const int MEM_RESET = 0x80000;
+            public const int MEM_TOP_DOWN = 0x100000;
+            public const int MEM_WRITE_WATCH = 0x200000;
+
+            public const int PAGE_NOACCESS = 0x01;
             public const int PAGE_READONLY = 0x02;      //只读
             public const int PAGE_READWRITE = 0x04;     //可读写内存
+            public const int PAGE_WRITECOPY = 0x08;
+            public const int PAGE_EXECUTE = 0x10;
+            public const int PAGE_EXECUTE_READ = 0x20;
+            public const int PAGE_EXECUTE_READWRITE = 0x40;
+            public const int PAGE_EXECUTE_WRITECOPY = 0x80;
+            public const int PAGE_GUARD = 0x100;
+            public const int PAGE_NOCACHE = 0x200;
+            public const int PAGE_WRITECOMBINE = 0x400;
 
             //向远程进程申请一段内存
             [DllImport("kernel32.dll")]
-            public static extern int VirtualAllocEx(IntPtr hwnd, Int32 lpaddress, int size, int type, Int32 tect);
+            public static extern IntPtr VirtualAllocEx(IntPtr hwnd, IntPtr lpaddress, int size, int type, int tect);
+
+            //回收申请的内存
+            [DllImport("kernel32.dll")]
+            public static extern int VirtualFreeEx(IntPtr hwnd, IntPtr lpaddress,int size, int type);
 
             [DllImport("kernel32.dll")]
             public static extern bool VirtualProtectEx(IntPtr hwnd, IntPtr lpaddress, int dwsize, int flNewProtect,ref int lpflOldProtect);
@@ -54,6 +75,10 @@ namespace Tools
             //获取模块的基址 null获取本模块(??主程序??)
             [DllImport("Kernel32.dll")]
             public static extern IntPtr GetModuleHandleA(string moudle);
+
+            [DllImport("user32.dll", EntryPoint = "SetWindowText")]
+            public static extern int SetWindowText(IntPtr hwnd,string formtitle);
+
 
             /// <summary>
             /// 进程名获取Pid
@@ -109,14 +134,35 @@ namespace Tools
             {
                 try
                 {
-                    byte[] buffer = new byte[AddrSize];
-                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
                     //打开一个已存在的进程对象  0x1F0FFF 最高权限
                     IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
-                    //将制定内存中的值读入缓冲区
-                    ReadProcessMemory(hProcess, address, byteAddress, AddrSize, IntPtr.Zero);
+                    int refval = ReadValue(address, hProcess, AddrSize);
                     //关闭操作
                     CloseHandle(hProcess);
+                    //从非托管内存中读取一个 32 位带符号整数。
+                    return refval;
+                }
+                catch
+                {
+                    return 0;
+                }
+            }
+
+            /// <summary>
+            /// 读内存
+            /// </summary>
+            /// <param name="address">内存地址</param>
+            /// <param name="hProcess">带权限的进程句柄</param>
+            /// <param name="AddrSize">读取的内存大小</param>
+            /// <returns>返回的内存值</returns>
+            public static int ReadValue(IntPtr address, IntPtr hProcess, int AddrSize = 4)
+            {
+                try
+                {
+                    byte[] buffer = new byte[AddrSize];
+                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
+                    //将制定内存中的值读入缓冲区
+                    ReadProcessMemory(hProcess, address, byteAddress, AddrSize, IntPtr.Zero);
                     //从非托管内存中读取一个 32 位带符号整数。
                     return Marshal.ReadInt32(byteAddress);
                 }
@@ -133,18 +179,30 @@ namespace Tools
             /// <param name="pid">进程Pid</param>
             /// <param name="AddrSize">读取的内存大小</param>
             /// <returns>返回的内存值</returns>
-            public static long ReadValue64(IntPtr address, int pid, int AddrSize = 4)
+            public static long ReadValue64(IntPtr address, int pid, int AddrSize = 8)
+            {
+                //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                long refval = ReadValue64(address, hProcess,AddrSize);
+                //关闭操作
+                CloseHandle(hProcess);
+                return refval;
+            }
+            /// <summary>
+            /// 读内存长整数
+            /// </summary>
+            /// <param name="address">内存地址</param>
+            /// <param name="hProcess">带权限的进程句柄</param>
+            /// <param name="AddrSize">读取的内存大小</param>
+            /// <returns>返回的内存值</returns>
+            public static long ReadValue64(IntPtr address, IntPtr hProcess, int AddrSize = 8)
             {
                 try
                 {
                     byte[] buffer = new byte[AddrSize];
                     IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
-                    //打开一个已存在的进程对象  0x1F0FFF 最高权限
-                    IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
                     //将制定内存中的值读入缓冲区
                     ReadProcessMemory(hProcess, address, byteAddress, AddrSize, IntPtr.Zero);
-                    //关闭操作
-                    CloseHandle(hProcess);
                     //从非托管内存中读取一个 64 位带符号整数。
                     return Marshal.ReadInt64(byteAddress);
                 }
@@ -162,16 +220,29 @@ namespace Tools
             /// <returns></returns>
             public static float ReadValue_float(IntPtr address, int pid)
             {
+                //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                //将制定内存中的值读入缓冲区
+                float retval =  ReadValue_float(address,hProcess);
+                //关闭操作
+                CloseHandle(hProcess);
+                return retval;
+            }
+
+            /// <summary>
+            /// 读内存单精度浮点数
+            /// </summary>
+            /// <param name="address"></param>
+            /// <param name="hProcess"></param>
+            /// <returns></returns>
+            public static float ReadValue_float(IntPtr address, IntPtr hProcess)
+            {
                 try
                 {
                     byte[] buffer = new byte[4];
                     IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
-                    //打开一个已存在的进程对象  0x1F0FFF 最高权限
-                    IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
                     //将制定内存中的值读入缓冲区
                     ReadProcessMemory(hProcess, address, byteAddress, 4, IntPtr.Zero);
-                    //关闭操作
-                    CloseHandle(hProcess);
                     //从非托管内存中读取一个 单精度浮点数。
                     return BitConverter.ToSingle(buffer, 0);
                 }
@@ -191,14 +262,34 @@ namespace Tools
             {
                 try
                 {
-                    byte[] buffer = new byte[8];
-                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
                     //打开一个已存在的进程对象  0x1F0FFF 最高权限
                     IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
-                    //将制定内存中的值读入缓冲区
-                    ReadProcessMemory(hProcess, address, byteAddress, 8, IntPtr.Zero);
+                    double refval = ReadValue_double(address,hProcess);
                     //关闭操作
                     CloseHandle(hProcess);
+                    //从非托管内存中读取一个 双精度浮点数
+                    return refval;
+                }
+                catch
+                {
+                    return 0;
+                }
+            }
+
+            /// <summary>
+            /// 读双精度浮点数
+            /// </summary>
+            /// <param name="address"></param>
+            /// <param name="hProcess"></param>
+            /// <returns></returns>
+            public static double ReadValue_double(IntPtr address, IntPtr hProcess)
+            {
+                try
+                {
+                    byte[] buffer = new byte[8];
+                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
+                    //将制定内存中的值读入缓冲区
+                    ReadProcessMemory(hProcess, address, byteAddress, 8, IntPtr.Zero);
                     //从非托管内存中读取一个 双精度浮点数
                     return BitConverter.ToDouble(buffer, 0);
                 }
@@ -219,18 +310,39 @@ namespace Tools
             {
                 try
                 {
-                    byte[] buffer = new byte[4];
-                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
                     //打开一个已存在的进程对象  0x1F0FFF 最高权限
                     IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                    IntPtr byteAddress = ReadValue_IntPtr(address, hProcess, ofs);
+                    //关闭操作
+                    CloseHandle(hProcess);
+                    //从非托管内存中读取一个 指针
+                    return byteAddress;
+                }
+                catch
+                {
+                    return IntPtr.Zero;
+                }
+            }
+
+            /// <summary>
+            /// 取内存指针
+            /// </summary>
+            /// <param name="address"></param>
+            /// <param name="hProcess"></param>
+            /// <param name="ofs">取前偏移</param>
+            /// <returns></returns>
+            public static IntPtr ReadValue_IntPtr(IntPtr address, IntPtr hProcess, int ofs = 0)
+            {
+                try
+                {
+                    byte[] buffer = new byte[4];
+                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
                     //将制定内存中的值读入缓冲区
                     if (ofs != 0)
                     {
                         address = IntPtr.Add(address, ofs);
                     }
                     ReadProcessMemory(hProcess, address, byteAddress, 4, IntPtr.Zero);
-                    //关闭操作
-                    CloseHandle(hProcess);
                     //从非托管内存中读取一个 指针
                     return Marshal.ReadIntPtr(byteAddress);
                 }
@@ -251,18 +363,38 @@ namespace Tools
             {
                 try
                 {
-                    byte[] buffer = new byte[8];
-                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
                     //打开一个已存在的进程对象  0x1F0FFF 最高权限
                     IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                    IntPtr byteAddress =  ReadValue_IntPtr64(address,hProcess,ofs);
+                    //关闭操作
+                    CloseHandle(hProcess);
+                    return byteAddress;
+                }
+                catch
+                {
+                    return IntPtr.Zero;
+                }
+            }
+
+            /// <summary>
+            /// 取内存指针64位
+            /// </summary>
+            /// <param name="address"></param>
+            /// <param name="hProcess"></param>
+            /// <param name="ofs">取前偏移</param>
+            /// <returns>在32位系统只能返回前四个字节的指针</returns>
+            public static IntPtr ReadValue_IntPtr64(IntPtr address, IntPtr hProcess, int ofs = 0)
+            {
+                try
+                {
+                    byte[] buffer = new byte[8];
+                    IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
                     //将制定内存中的值读入缓冲区
                     if (ofs != 0)
                     {
                         address = IntPtr.Add(address, ofs);
                     }
                     ReadProcessMemory(hProcess, address, byteAddress, 8, IntPtr.Zero);
-                    //关闭操作
-                    CloseHandle(hProcess);
                     //从非托管内存中读取一个 指针
                     return Marshal.ReadIntPtr(byteAddress);
                 }
@@ -272,18 +404,46 @@ namespace Tools
                 }
             }
 
+            /// <summary>
+            /// 读内存字节数组
+            /// </summary>
+            /// <param name="address"></param>
+            /// <param name="pid"></param>
+            /// <param name="len"></param>
+            /// <returns></returns>
             public static byte[] ReadValue_bytes(IntPtr address, int pid, int len)
+            {
+                try
+                {
+                    //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                    IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                    byte[] buffer = ReadValue_bytes(address,hProcess,len);
+                    //关闭操作
+                    CloseHandle(hProcess);
+                    //从非托管内存中读取一个 指针
+                    return buffer;
+                }
+                catch
+                {
+                    return new byte[] { };
+                }
+            }
+
+            /// <summary>
+            /// 读内存字节数组
+            /// </summary>
+            /// <param name="address"></param>
+            /// <param name="hProcess"></param>
+            /// <param name="len"></param>
+            /// <returns></returns>
+            public static byte[] ReadValue_bytes(IntPtr address, IntPtr hProcess, int len)
             {
                 try
                 {
                     byte[] buffer = new byte[len];
                     IntPtr byteAddress = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
-                    //打开一个已存在的进程对象  0x1F0FFF 最高权限
-                    IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
                     //将制定内存中的值读入缓冲区
                     ReadProcessMemory(hProcess, address, byteAddress, len, IntPtr.Zero);
-                    //关闭操作
-                    CloseHandle(hProcess);
                     //从非托管内存中读取一个 指针
                     return buffer;
                 }
@@ -303,38 +463,60 @@ namespace Tools
             {
                 //打开一个已存在的进程对象  0x1F0FFF 最高权限
                 IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                WriteValue_float(address, value, hProcess);
+                //关闭操作
+                CloseHandle(hProcess);
+            }
+
+            /// <summary>
+            /// 写单精度浮点数
+            /// </summary>
+            /// <param name="address"></param>
+            /// <param name="value"></param>
+            /// <param name="hProcess"></param>
+            public static void WriteValue_float(IntPtr address, float value, IntPtr hProcess)
+            {
                 int virtue = 0;
                 bool b = VirtualProtectEx(hProcess, address, sizeof(float), PAGE_READWRITE, ref virtue);
                 byte[] _byte = BitConverter.GetBytes(value);
-                int[] i = new int[4];
-                for (int p=0;p<_byte.Length;p++)
-                {
-                    i[p] = (int)_byte[p];
-                }
                 //从指定内存中写入字节集数据
                 WriteProcessMemory(hProcess, address, _byte, 4, IntPtr.Zero);
                 if (b)
                 {
                     VirtualProtectEx(hProcess, address, sizeof(float), virtue, ref virtue);
                 }
-                //关闭操作
-                CloseHandle(hProcess);
             }
-
+            /// <summary>
+            /// 写内存字节集
+            /// </summary>
+            /// <param name="address">要写入的地址</param>
+            /// <param name="value">写入的字节数组</param>
+            /// <param name="pid">进程pid</param>
             public static void WriteValue_bytes(IntPtr address, byte[] value, int pid)
             {
                 //打开一个已存在的进程对象  0x1F0FFF 最高权限
                 IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                WriteValue_bytes(address, value, hProcess);
+                //关闭操作
+                CloseHandle(hProcess);
+            }
+
+            /// <summary>
+            /// 写内存字节集
+            /// </summary>
+            /// <param name="address">要写入的地址</param>
+            /// <param name="value">写入的字节数组</param>
+            /// <param name="hProcess">具有权限的进程句柄</param>
+            public static void WriteValue_bytes(IntPtr address, byte[] value, IntPtr hProcess)
+            {
                 int virtue = 0;
-                bool b = VirtualProtectEx(hProcess,address,value.Length, PAGE_READWRITE,ref virtue);
+                bool b = VirtualProtectEx(hProcess, address, value.Length, PAGE_READWRITE, ref virtue);
                 //从指定内存中写入字节集数据
                 WriteProcessMemory(hProcess, address, value, value.Length, IntPtr.Zero);
                 if (b)
                 {
                     VirtualProtectEx(hProcess, address, value.Length, virtue, ref virtue);
                 }
-                //关闭操作
-                CloseHandle(hProcess);
                 
             }
 
@@ -344,11 +526,25 @@ namespace Tools
             /// <param name="address">内存地址</param>
             /// <param name="value">写入的内存值</param>
             /// <param name="pid">进程pid</param>
-            /// <param name="AddrSize">写入的地址大小</param>
+            /// <param name="AddrSize">写入的地址大小[有点多余]</param>
             public static void WriteValue(IntPtr address, int value, int pid, int AddrSize = 4)
             {
                 //打开一个已存在的进程对象  0x1F0FFF 最高权限
                 IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                WriteValue(address,value, hProcess,AddrSize);
+                //关闭操作
+                CloseHandle(hProcess);
+            }
+
+            /// <summary>
+            /// 写内存
+            /// </summary>
+            /// <param name="address">内存地址</param>
+            /// <param name="value">写入的内存值</param>
+            /// <param name="hProcess">具有权限的进程句柄</param>
+            /// <param name="AddrSize">写入的地址大小[有点多余]</param>
+            public static void WriteValue(IntPtr address, int value, IntPtr hProcess, int AddrSize = 4)
+            {
                 int virtue = 0;
                 bool b = VirtualProtectEx(hProcess, address, sizeof(int), PAGE_READWRITE, ref virtue);
                 //从指定内存中写入字节集数据
@@ -357,10 +553,23 @@ namespace Tools
                 {
                     VirtualProtectEx(hProcess, address, sizeof(int), virtue, ref virtue);
                 }
-                //关闭操作
-                CloseHandle(hProcess);
             }
 
+            public static IntPtr ApplyRunMemory(int pid,int size)
+            {
+                IntPtr hProcess = OpenProcess(0x1F0FFF, false, pid);
+                IntPtr lpAddress = ApplyRunMemory(hProcess, size);
+                //int virtue = 0;
+                //VirtualProtectEx(hProcess, lpAddress, 0x500, PAGE_EXECUTE_READWRITE, ref virtue);
+                CloseHandle(hProcess);
+                return lpAddress;
+            }
+
+            public static IntPtr ApplyRunMemory(IntPtr hProcess, int size)
+            {
+                IntPtr lpAddress = VirtualAllocEx(hProcess, IntPtr.Zero, size, MEM_COMMIT | MEM_TOP_DOWN, PAGE_EXECUTE_READWRITE);
+                return lpAddress;
+            }
 
             /// <summary>
             /// 内存搜索 支持模糊搜索
@@ -396,9 +605,8 @@ namespace Tools
                         return new IntPtr[] { };
                     }
                 }
-
-
                 ps.Close();
+                
                 IntPtr naddr = startAddress;
                 List<IntPtr> value = new List<IntPtr>();
                 try

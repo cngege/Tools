@@ -16,9 +16,9 @@ namespace Tools
         public class InIFile
         {
             [DllImport("kernel32")]
-            private static extern int GetPrivateProfileString(string lpAppName, string lpKeyName, string lpDefault, StringBuilder lpReturnedString, int nSize, string lpFileName);
+            public static extern int GetPrivateProfileString(string lpAppName, string lpKeyName, string lpDefault, StringBuilder lpReturnedString, int nSize, string lpFileName);
             [DllImport("kernel32")]
-            private static extern int WritePrivateProfileString(string lpApplicationName, string lpKeyName, string lpString, string lpFileName);
+            public static extern int WritePrivateProfileString(string lpApplicationName, string lpKeyName, string lpString, string lpFileName);
 
             /// <summary>
             /// 该实例默认的配置文件路径，如果操作时没有指定配置文件，则之前必须要将路径赋值到此变量
@@ -39,7 +39,7 @@ namespace Tools
             /// <param name="_Path"></param>
             private static void CheckPath(String _Path)
             {
-                if (Directory.Exists(Path.GetDirectoryName(_Path)) == false)
+                if (Path.GetDirectoryName(_Path) != "" && Directory.Exists(Path.GetDirectoryName(_Path)) == false)
                 {
                     new DirectoryInfo(Path.GetDirectoryName(_Path)).Create();//如何这个文件的文件夹不存在 则创建一个文件夹 
                 }
