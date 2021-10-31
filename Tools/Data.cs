@@ -1,7 +1,7 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
 namespace Tools
@@ -9,16 +9,28 @@ namespace Tools
     //数据处理
     namespace Data
     {
-        public class JSON : JObject
+        public class JSON
         {
             /// <summary>
             /// 将JSON格式的字符串重新反序列化
             /// </summary>
-            /// <param name="_json">JSON格式的字符串</param>
+            /// <param name="jsonstr">JSON格式的字符串</param>
             /// <returns></returns>
-            public static JSON ToJson(String _json)
+            public static T Parse<T>(String jsonstr)
             {
-                return (JSON)Parse(_json);
+                JavaScriptSerializer js = new JavaScriptSerializer();
+                return js.Deserialize<T>(jsonstr);
+            }
+
+            /// <summary>
+            /// JSON对象(类对象)序列化为字符串
+            /// </summary>
+            /// <param name="jsonobj">对象</param>
+            /// <returns>返回序列化后的字符串</returns>
+            public static String stringify(object jsonobj)
+            {
+                JavaScriptSerializer js = new JavaScriptSerializer();
+                return js.Serialize(jsonobj);
             }
         }
 
