@@ -23,6 +23,17 @@ namespace Tools
             }
 
             /// <summary>
+            /// 将字符串反序列化为只能靠索引取值的对象
+            /// </summary>
+            /// <param name="jsonstr">JSON格式的字符串</param>
+            /// <returns>一个包含JSON值的dynamic对象</returns>
+            public static dynamic Parse(String jsonstr)
+            {
+                JavaScriptSerializer js = new JavaScriptSerializer();
+                return js.Deserialize<dynamic>(jsonstr);
+            }
+
+            /// <summary>
             /// JSON对象(类对象)序列化为字符串
             /// </summary>
             /// <param name="jsonobj">对象</param>
