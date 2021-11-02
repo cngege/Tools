@@ -217,13 +217,50 @@ namespace Tools
 
         public class Folder
         {
+
+            /// <summary>
+            /// 文件夹复制
+            /// </summary>
+            /// <param name="src">原文件夹[如果不是以\结尾则在目标文件夹下建立同名文件夹]</param>
+            /// <param name="dest">目的文件夹</param>
+            private static void Copy(string src, string dest)
+            {
+                DirectoryInfo srcdir = new DirectoryInfo(src);
+                string destPath = dest;
+                if (dest.LastIndexOf('\\') != (dest.Length - 1))
+                {
+                    dest += "\\";
+                }
+                if (src.LastIndexOf('\\') != (src.Length - 1))      //如果要复制文件夹的路径不是以\结尾
+                {
+                    destPath = dest + srcdir.Name + "\\";
+                    src += "\\";
+                }
+
+                if (!Directory.Exists(destPath))
+                {
+                    Directory.CreateDirectory(destPath);
+                }
+                FileInfo[] files = srcdir.GetFiles();
+                foreach (FileInfo file in files)
+                {
+                    file.CopyTo(destPath + file.Name, true);
+                }
+                DirectoryInfo[] dirs = srcdir.GetDirectories();
+                foreach (DirectoryInfo dirInfo in dirs)
+                {
+                    Copy(dirInfo.FullName, destPath);
+                }
+            }
+
             /// <summary>
             /// 拷贝文件夹
             /// </summary>
             /// <param name="srcdir">[复制此文件夹]</param>
             /// <param name="desdir">[复制至此文件夹]如果以\结尾就创建要复制的同名文件夹</param>
             /// <param name="overwrite">是否覆盖</param>
-            public static void Copy(string srcdir, string desdir, bool overwrite)
+            [Obsolete]
+            public static void _Copy(string srcdir, string desdir, bool overwrite)
             {
                 string folderName = srcdir.Substring(srcdir.LastIndexOf("\\") + 1);
 
@@ -245,7 +282,7 @@ namespace Tools
                             Directory.CreateDirectory(currentdir);
                         }
 
-                        Copy(file, currentdir, overwrite);
+                        _Copy(file, currentdir, overwrite);
                     }
                     else if (File.Exists(file)) // 否则如果是文件直接copy文件
                     {
