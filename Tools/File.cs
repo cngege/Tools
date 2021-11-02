@@ -223,7 +223,7 @@ namespace Tools
             /// </summary>
             /// <param name="src">原文件夹[如果不是以\结尾则在目标文件夹下建立同名文件夹]</param>
             /// <param name="dest">目的文件夹</param>
-            private static void Copy(string src, string dest)
+            public static void Copy(string src, string dest)
             {
                 DirectoryInfo srcdir = new DirectoryInfo(src);
                 string destPath = dest;
