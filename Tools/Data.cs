@@ -16,7 +16,7 @@ namespace Tools
             /// </summary>
             /// <param name="jsonstr">JSON格式的字符串</param>
             /// <returns></returns>
-            public static T Parse<T>(String jsonstr)
+            public static T parse<T>(String jsonstr)
             {
                 JavaScriptSerializer js = new JavaScriptSerializer();
                 return js.Deserialize<T>(jsonstr);
@@ -27,7 +27,7 @@ namespace Tools
             /// </summary>
             /// <param name="jsonstr">JSON格式的字符串</param>
             /// <returns>一个包含JSON值的dynamic对象</returns>
-            public static dynamic Parse(String jsonstr)
+            public static dynamic parse(String jsonstr)
             {
                 JavaScriptSerializer js = new JavaScriptSerializer();
                 return js.Deserialize<dynamic>(jsonstr);
