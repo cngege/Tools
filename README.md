@@ -13,11 +13,11 @@
 
 通过e.Type 和 e.MessageText获取错误信息，该类继承Exception，dll中接受Exception抛出的错误(.GetType() 和 Ex.Message)传给Error的.Type 和 .MessageText<br/>
 
-##Net命名空间：<br/>
+**Net命名空间**：
 
     using Tools.net;
 
-###Get类：发送网络Get请求<br/>
+**Get类：发送网络Get请求**
 
     Get get = new Get("请求连接");
     get.data = "name=Zhangsan&password=Lisi"; // 字符串格式的请求参数
@@ -31,11 +31,11 @@
     get.Port=6800 //端口默认6800
     get.CookieStr= "" //Cookie 字符串格式 默认为空，不为空时启用
 
-###Post类：发送网路Post请求
+**Post类：发送网路Post请求**
 使用方法同Get类似
 
 
-##命名空间：File
+**命名空间**：File
 
     using Tools.File
     
