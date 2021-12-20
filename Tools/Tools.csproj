@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Address.cs" />
+    <Compile Include="DLLInject.cs" />
     <Compile Include="Data.cs" />
     <Compile Include="File.cs" />
     <Compile Include="Form.cs" />

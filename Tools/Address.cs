@@ -57,15 +57,15 @@ namespace Tools
             [DllImport("kernel32.dll")]
             public static extern int VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, int dwLength);
             //从指定内存中读取字节集数据
-            [DllImportAttribute("kernel32.dll", EntryPoint = "ReadProcessMemory")]
+            [DllImport("kernel32.dll", EntryPoint = "ReadProcessMemory")]
             public static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int nSize, IntPtr lpNumberOfBytesRead);
 
             //从指定内存中写入字节集数据
-            [DllImportAttribute("kernel32.dll", EntryPoint = "WriteProcessMemory")]
+            [DllImport("kernel32.dll", EntryPoint = "WriteProcessMemory")]
             public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int nSize, IntPtr lpNumberOfBytesWritten);
 
             //打开一个已存在的进程对象，并返回进程的句柄
-            [DllImportAttribute("kernel32.dll", EntryPoint = "OpenProcess")]
+            [DllImport("kernel32.dll", EntryPoint = "OpenProcess")]
             public static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
 
             //关闭一个内核对象。其中包括文件、文件映射、进程、线程、安全和同步对象等。
@@ -79,6 +79,13 @@ namespace Tools
             [DllImport("user32.dll", EntryPoint = "SetWindowText")]
             public static extern int SetWindowText(IntPtr hwnd,string formtitle);
 
+            // 创建远程线程
+            [DllImport("kernel32.dll")]
+            public static extern int CreateRemoteThread(IntPtr hwnd, int attrib, int size, IntPtr address, IntPtr par, int flags, int threadid);
+
+            
+            [DllImport("kernel32.dll")]
+            public static extern IntPtr GetProcAddress(IntPtr hwnd, string lpname);
 
             /// <summary>
             /// 进程名获取Pid
