@@ -61,7 +61,7 @@ namespace Tools
                     Address.Address.CloseHandle(hProcess);
                     return InjectState.Fail_ApplyMemory;
                 }
-                byte[] dllpath_byte = Encoding.Default.GetBytes(dllpath);
+                byte[] dllpath_byte = Encoding.ASCII.GetBytes(dllpath);
                 Address.Address.WriteValue_bytes(applyptr, dllpath_byte, hProcess);
                 if (Address.Address.CreateRemoteThread(hProcess, 0, 0, Address.Address.GetProcAddress(Address.Address.GetModuleHandleA("Kernel32"), "LoadLibraryA"), applyptr, 0, 0) == 0)
                 {
