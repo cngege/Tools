@@ -120,8 +120,7 @@ namespace Tools
                 {
                     for (int i = 0; i < ps.Modules.Count; i++)
                     {
-
-                        if (ps.Modules[i].ModuleName == module)
+                        if (ps.Modules[i].ModuleName.ToLower() == module.ToLower())
                         {
                             return ps.Modules[i].BaseAddress;
                         }
