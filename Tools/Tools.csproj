@@ -29,7 +29,7 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <WarningLevel>1</WarningLevel>
     <DocumentationFile>bin\Release\Tools.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
@@ -51,6 +51,7 @@
     <Compile Include="File.cs" />
     <Compile Include="Form.cs" />
     <Compile Include="KeyHook.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="MCPE.cs" />
     <Compile Include="Net.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
