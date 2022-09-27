@@ -226,15 +226,14 @@ namespace Tools
             public static void Copy(string src, string dest)
             {
                 DirectoryInfo srcdir = new DirectoryInfo(src);
-                string destPath = dest;
-                if (dest.LastIndexOf('\\') != (dest.Length - 1))
+                if (dest.LastIndexOf("\\") != (dest.Length - 1) && dest.LastIndexOf("/") != (dest.Length - 1))
                 {
                     dest += "\\";
                 }
-                if (src.LastIndexOf('\\') != (src.Length - 1))      //如果要复制文件夹的路径不是以\结尾
+                string destPath = dest;
+                if (src.LastIndexOf("\\") != (src.Length - 1) && dest.LastIndexOf("/") != (dest.Length - 1))      //如果要复制文件夹的路径不是以\结尾
                 {
                     destPath = dest + srcdir.Name + "\\";
-                    src += "\\";
                 }
 
                 if (!Directory.Exists(destPath))
@@ -303,6 +302,78 @@ namespace Tools
                 }
             }
 
+
+            /// <summary>
+            /// 同盘文件夹移动
+            /// </summary>
+            /// <param name="src">原文件夹[如果以\结尾则只移动文件夹下的所有内容,否则移动文件夹本身]</param>
+            /// <param name="dest">目的文件夹</param>
+            public static void DirMove(string src, string dest)
+            {
+                DirectoryInfo srcdir = new DirectoryInfo(src);
+                if (dest.LastIndexOf("\\") != (dest.Length - 1) && dest.LastIndexOf("/") != (dest.Length - 1))
+                {
+                    dest += "\\";
+                }
+                string destPath = dest;
+                if (src.LastIndexOf('\\') != (src.Length - 1))      //如果要移动文件夹的路径不是以\结尾
+                {
+                    destPath = dest + srcdir.Name + "\\";
+                    src += "\\";
+                }
+
+                if (!Directory.Exists(destPath))
+                {
+                    Directory.CreateDirectory(destPath);
+                }
+                FileInfo[] files = srcdir.GetFiles();
+                foreach (FileInfo file in files)
+                {
+                    if (File.Exists(destPath + file.Name))
+                    {
+                        File.Delete(destPath + file.Name);
+                    }
+                    file.MoveTo(destPath + file.Name);
+                }
+                DirectoryInfo[] dirs = srcdir.GetDirectories();
+                foreach (DirectoryInfo dirInfo in dirs)
+                {
+                    DirMove(dirInfo.FullName, destPath);
+                }
+                Directory.Delete(src);
+            }
+
+            /// <summary>
+            /// 移动文件夹下的所有项目,完成后只剩一个空文件夹
+            /// </summary>
+            /// <param name="src"></param>
+            /// <param name="dest"></param>
+            public static void DirMoveAllItem(string src, string dest)
+            {
+                DirectoryInfo srcdir = new DirectoryInfo(src);
+                if (dest.LastIndexOf("\\") != (dest.Length - 1) && dest.LastIndexOf("/") != (dest.Length - 1))
+                {
+                    dest += "\\";
+                }
+                if (!Directory.Exists(dest))
+                {
+                    Directory.CreateDirectory(dest);
+                }
+                FileInfo[] files = srcdir.GetFiles();
+                foreach (FileInfo file in files)
+                {
+                    if (File.Exists(dest + file.Name))
+                    {
+                        File.Delete(dest + file.Name);
+                    }
+                    file.MoveTo(dest + file.Name);
+                }
+                DirectoryInfo[] dirs = srcdir.GetDirectories();
+                foreach (DirectoryInfo dirInfo in dirs)
+                {
+                    DirMove(dirInfo.FullName, dest);
+                }
+            }
 
             /// <summary>
             /// 获取指定路径的大小
