@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace Tools
 {
@@ -491,6 +492,7 @@ namespace Tools
                 {
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
+                    //request.ServerCertificateValidationCallback = delegate { return true; };
                     //声明一个HttpWebRequest请求
                     request.Timeout = 30*1000;  //设置连接超时时间
                     if (Headers != null)
@@ -511,9 +513,10 @@ namespace Tools
                         strResult = streamReader.ReadToEnd();
                     }
                 }
-                catch
+                catch(Exception ex)
                 {
                     strResult = "";
+                    //strResult = ex.ToString();
                 }
                 return strResult;
             }
