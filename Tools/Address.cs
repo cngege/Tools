@@ -716,10 +716,163 @@ namespace Tools
                         naddr = IntPtr.Add(naddr, count);
                     }
                 }
-                catch (Exception e)
+                catch
                 {
                     //System.Windows.Forms.MessageBox.Show(e.StackTrace + "\n" + e.Message);
                     return value.ToArray();
+                }
+            }
+
+
+            /// <summary>
+            /// 内存搜索 仅成功匹配第一个结果就不再进行搜索 支持模糊搜索
+            /// </summary>
+            /// <param name="pid"></param>
+            /// <param name="memoryBlock"></param>
+            /// <param name="moudlename">要内存搜索的模块名,如果空则为主程序</param>
+            /// <returns>返回匹配的内存地址数组</returns>
+            public static IntPtr MemoryQueryFirst(int pid, int[] memoryBlock, string moudlename = null)
+            {
+                Process ps = Process.GetProcessById(pid);
+                IntPtr startAddress = IntPtr.Zero;
+                int moudlesize = 0;
+                if (moudlename == null)
+                {
+                    startAddress = ps.MainModule.BaseAddress;
+                    moudlesize = ps.MainModule.ModuleMemorySize;
+                }
+                else
+                {
+                    for (int i = 0; i < ps.Modules.Count; i++)
+                    {
+                        if (ps.Modules[i].ModuleName == moudlename)
+                        {
+                            startAddress = ps.Modules[i].BaseAddress;
+                            moudlesize = ps.Modules[i].ModuleMemorySize;
+                            break;
+                        }
+                    }
+                    if (moudlesize == 0)
+                    {
+                        ps.Close();
+                        return IntPtr.Zero;
+                    }
+                }
+                ps.Close();
+
+                IntPtr naddr = startAddress;
+                //List<IntPtr> value = new List<IntPtr>();
+                try
+                {
+                    //int count = 4096000;
+                    int count = moudlesize;
+
+                    byte[] bffarray = new byte[count];
+                    IntPtr bffAddress = Marshal.UnsafeAddrOfPinnedArrayElement(bffarray, 0);
+                    //打开一个已存在的进程对象  0x1F0FFF 最高权限
+                    IntPtr Process = OpenProcess(0x1F0FFF, false, pid);
+                    //将制定内存中的值读入缓冲区
+
+                    while (true)
+                    {
+
+                        ReadProcessMemory(Process, naddr, bffAddress, count, IntPtr.Zero);   //读取并存入缓冲区
+                        for (int i = 0; i < bffarray.Length; i++)
+                        {
+                            if (bffarray[i] == memoryBlock[0])
+                            {
+                                if (count - i >= memoryBlock.Length)     //不是在bffarray末尾匹配到的
+                                {
+                                    for (int j = 0; j < memoryBlock.Length; j++)
+                                    {
+                                        if (memoryBlock[j] != -1 && memoryBlock[j] != bffarray[i + j])  //!= -1 模糊搜索
+                                        {
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            if (j == memoryBlock.Length - 1)    // 表示符合的已经是数组最后一个了 表示全符合
+                                            {
+                                                //找到了
+                                                ps.Close();
+                                                return IntPtr.Add(naddr, i);
+                                                //value.Add(IntPtr.Add(naddr, i));
+                                            }
+                                        }
+                                        //到这里表示 找到了第一个值 但后面的值不匹配
+                                    }
+                                }
+                                else
+                                {
+                                    //表示 这是在bffarray最后几个元素中找到的 确定了匹配的值不够
+                                    byte[] bffarray2 = new byte[memoryBlock.Length];
+                                    IntPtr bffAddress2 = Marshal.UnsafeAddrOfPinnedArrayElement(bffarray2, 0);
+                                    ReadProcessMemory(Process, IntPtr.Add(naddr, count), bffAddress2, memoryBlock.Length, IntPtr.Zero);   //读取并存入缓冲区
+
+                                    for (int j = 0; j < memoryBlock.Length; j++)
+                                    {
+                                        if (i + j <= count - 1)                             //还没超出第一个数组范围
+                                        {
+                                            if (memoryBlock[j] != -1 && memoryBlock[j] != bffarray[i + j])
+                                            {
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                if (j == memoryBlock.Length - 1)
+                                                {
+                                                    //找到了
+                                                    ps.Close();
+                                                    return IntPtr.Add(naddr, i);
+                                                    //value.Add(IntPtr.Add(naddr, i));
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            //1 2 3 4 5
+                                            //          6 7 8 9 10
+                                            //  2 3 4 5 6 7
+                                            //count = 6
+                                            //i = 1   j - (count - i - 1)
+                                            //j = 4   4 - (6 - 1 - 1) = 0
+                                            //    6 == 6 true
+                                            //j = 5   5 - (6 - 1 - 1) = 1
+                                            //    7 == 7 true
+                                            if (memoryBlock[j] != -1 && memoryBlock[j] != bffarray2[j - (count - 1 - i)])
+                                            {
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                if (j == memoryBlock.Length - 1)
+                                                {
+                                                    //找到了
+                                                    ps.Close();
+                                                    return IntPtr.Add(naddr, i);
+                                                    //value.Add(IntPtr.Add(naddr, i));
+                                                }
+                                            }
+                                        }
+
+                                    }
+                                }
+                            }
+                        }
+                        //if (naddr.ToInt64() > 0x7FFFFFFFFFFFFFFF)
+                        if ((naddr.ToInt64() - startAddress.ToInt64()) > moudlesize)
+                        {
+                            //System.Windows.Forms.MessageBox.Show(((Int64)IntPtr.Add(startAddress,moudlesize)).ToString("x16"));
+                            CloseHandle(Process);
+                            return IntPtr.Zero;
+                        }
+                        naddr = IntPtr.Add(naddr, count);
+                    }
+                }
+                catch
+                {
+                    //System.Windows.Forms.MessageBox.Show(e.StackTrace + "\n" + e.Message);
+                    return IntPtr.Zero;
                 }
             }
 
