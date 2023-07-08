@@ -13,8 +13,14 @@ namespace Tools
             private static ConsoleColor infoTextColor = ConsoleColor.White;
             private static ConsoleColor warnTextColor = ConsoleColor.Yellow;
             private static ConsoleColor errorTextColor = ConsoleColor.Red;
+            private static ConsoleColor subTitleTextColor = ConsoleColor.Gray;
+
 
             private static bool displayColor = true;
+            private static string subTitle = string.Empty;
+
+            // Logger.SubTitle("我是副标题").Info("你好世界");
+            // Logger.SetSubTitle("我是副标题");
 
             static string getForMatTime(DateTime t)
             {
@@ -44,9 +50,24 @@ namespace Tools
                 errorTextColor = errorColor;
             }
 
+            public static void SetSubTitleTextColor(ConsoleColor subTitleColor)
+            {
+                subTitleTextColor = subTitleColor;
+            }
+
             public static void EnableColor(bool enable = true)
             {
                 displayColor = enable;
+            }
+
+            public static void SetSubTitle(string subtitle)
+            {
+                subTitle = subtitle;
+            }
+
+            public static void NewLine()
+            {
+                Console.WriteLine();
             }
 
             public static void Info(String argn, params Object[] p)
@@ -55,20 +76,31 @@ namespace Tools
                 Console.ResetColor();
                 if (!displayColor)
                 {
-                    Console.Write("[{0} INFO] ", getForMatTime(DateTime.Now));
+                    Console.Write("{0} INFO ", getForMatTime(DateTime.Now));
+                    if (!String.IsNullOrEmpty(subTitle))
+                    {
+                        Console.Write("[{0}] ", subTitle);
+                    }
                     Console.WriteLine(argn, p);
                     Console.ForegroundColor = currentColor;
                     return;
                 }
-                Console.Write("[");
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.Write("{0} ", getForMatTime(DateTime.Now));
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.Write("INFO");
+                Console.Write("INFO ");
                 Console.ResetColor();
-                Console.Write("] ");
+                if (!String.IsNullOrEmpty(subTitle))
+                {
+                    Console.Write("[");
+                    Console.ForegroundColor = subTitleTextColor;
+                    Console.Write(subTitle);
+                    Console.ResetColor();
+                    Console.Write("] ");
+                }
                 Console.ForegroundColor = (currentColor == ConsoleColor.Gray) ? infoTextColor : currentColor;
                 Console.WriteLine(argn, p);
+                Console.ForegroundColor = currentColor;
             }
 
             public static void Warn(String argn, params Object[] p)
@@ -77,18 +109,28 @@ namespace Tools
                 Console.ResetColor();
                 if (!displayColor)
                 {
-                    Console.Write("[{0} WARN] ", getForMatTime(DateTime.Now));
+                    Console.Write("{0} WARN ", getForMatTime(DateTime.Now));
+                    if (!String.IsNullOrEmpty(subTitle))
+                    {
+                        Console.Write("[{0}] ", subTitle);
+                    }
                     Console.WriteLine(argn, p);
                     Console.ForegroundColor = currentColor;
                     return;
                 }
-                Console.Write("[");
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.Write("{0} ", getForMatTime(DateTime.Now));
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.Write("WARN");
+                Console.Write("WARN ");
                 Console.ResetColor();
-                Console.Write("] ");
+                if (!String.IsNullOrEmpty(subTitle))
+                {
+                    Console.Write("[");
+                    Console.ForegroundColor = subTitleTextColor;
+                    Console.Write(subTitle);
+                    Console.ResetColor();
+                    Console.Write("] ");
+                }
                 Console.ForegroundColor = warnTextColor;
                 Console.WriteLine(argn, p);
                 Console.ForegroundColor = currentColor;
@@ -99,18 +141,28 @@ namespace Tools
                 Console.ResetColor();
                 if (!displayColor)
                 {
-                    Console.Write("[{0} EROR] ", getForMatTime(DateTime.Now));
+                    Console.Write("{0} EROR ", getForMatTime(DateTime.Now));
+                    if (!String.IsNullOrEmpty(subTitle))
+                    {
+                        Console.Write("[{0}] ", subTitle);
+                    }
                     Console.WriteLine(argn, p);
                     Console.ForegroundColor = currentColor;
                     return;
                 }
-                Console.Write("[");
                 Console.ForegroundColor = ConsoleColor.Gray;
                 Console.Write("{0} ", getForMatTime(DateTime.Now));
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.Write("EROR");
+                Console.Write("EROR ");
                 Console.ResetColor();
-                Console.Write("] ");
+                if (!String.IsNullOrEmpty(subTitle))
+                {
+                    Console.Write("[");
+                    Console.ForegroundColor = subTitleTextColor;
+                    Console.Write(subTitle);
+                    Console.ResetColor();
+                    Console.Write("] ");
+                }
                 Console.ForegroundColor = errorTextColor;
                 Console.WriteLine(argn, p);
                 Console.ForegroundColor = currentColor;
