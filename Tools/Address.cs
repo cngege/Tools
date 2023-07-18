@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -922,6 +923,94 @@ namespace Tools
                 return intmoy;
             }
 
+        }
+
+
+        public class Binary
+        {
+            /// <summary>
+            /// 从文件中寻找特征码,返回特征码的位置
+            /// </summary>
+            /// <param name="file">文件</param>
+            /// <param name="signature">特征码</param>
+            /// <returns>返回找到的对应位置</returns>
+            /// <exception cref="FileNotFoundException">如果参数 file 文件不存在,则抛出此错误</exception>
+            public static int FindSignature(string file , string signature)
+            {
+                if (!File.Exists(file))
+                {
+                    throw new FileNotFoundException(file);
+                }
+                return FindSignature(File.ReadAllBytes(file), signature);
+            }
+
+            /// <summary>
+            /// 从字节数组中寻找特征码,返回特征码的位置
+            /// </summary>
+            /// <param name="bin"></param>
+            /// <param name="signature"></param>
+            /// <returns>返回找到的对应位置</returns>
+            public static int FindSignature(byte[] bin, string signature)
+            {
+                if (bin.Length == 0)
+                {
+                    return 0;
+                }
+                if (string.IsNullOrEmpty(signature))
+                {
+                    return 0;
+                }
+
+                int fileSize = bin.Length;
+
+                int currentPos = 0;
+
+                int[] sign = Memory_Parse(signature);
+
+                while (currentPos < fileSize)
+                {
+                    // 如果到了文件的结尾 ，剩下内容不够特征码的长度
+                    if (fileSize - currentPos < sign.Length)
+                    {
+                        return 0;
+                    }
+
+                    // 特征码第一个对上了
+                    if (bin[currentPos] == sign[0] || sign[0] == -1)
+                    {
+                        // 特侦码比对
+                        for (int i = 1; i < sign.Length; i++)
+                        {
+                            // 如果特征码是?
+                            if (sign[i] == -1)
+                            {
+                                continue;
+                            }
+                            if (bin[currentPos + i] == (byte)sign[i])
+                            {
+                                if (i == sign.Length - 1)
+                                {
+                                    // 匹配成功
+                                    return currentPos;
+                                }
+                                continue;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    currentPos++;
+                }
+                return 0;
+            }
+
+
+            public static int[] Memory_Parse(string memory)
+            {
+                return Address.Memory_Parse(memory);
+            }
         }
     }
 }
