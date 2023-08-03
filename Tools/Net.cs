@@ -193,17 +193,17 @@ namespace Tools
             /// <summary>
             /// 委托 回调给使用者下载进度
             /// </summary>
-            /// <param name="filesize">已下载大小</param>
-            /// <param name="downsize">总共大小</param>
+            /// <param name="downloadedsize">已下载大小</param>
+            /// <param name="filesize">总共大小</param>
             /// <param name="waft">是否下载完成</param>
-            public delegate void info(long filesize, long downsize, bool waft);
+            public delegate void info(long downloadedsize, long filesize, bool waft);
 
             //用于回调下载进度
             public event info Downprogress;
 
-            protected virtual void OnDownprogress(long filesize, long downsize, bool waft)
+            protected virtual void OnDownprogress(long downloadedsize, long filesize, bool waft)
             {
-                Downprogress?.Invoke(filesize, downsize, waft);
+                Downprogress?.Invoke(downloadedsize, filesize, waft);
             }
 
 
