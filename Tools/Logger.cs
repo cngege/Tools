@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Tools.Data;
 
 namespace Tools
 {
@@ -189,6 +191,33 @@ namespace Tools
 
         public class Logger
         {
+            internal class NativeMethods
+            {
+                [DllImport("kernel32.dll", SetLastError = true)]
+                public static extern bool SetConsoleMode(IntPtr hConsoleHandle, int mode);
+
+                [DllImport("kernel32.dll", SetLastError = true)]
+                public static extern bool GetConsoleMode(IntPtr handle, out int mode);
+
+                [DllImport("kernel32.dll", SetLastError = true)]
+                public static extern IntPtr GetStdHandle(int handle);
+            }
+
+            class RGBColor
+            {
+                public int r, g, b;
+                public RGBColor(int r, int g, int b)
+                {
+                    this.r = r;
+                    this.g = g;
+                    this.b = b;
+                }
+            }
+
+
+            // 38 前景 48 背景
+            // Console.WriteLine("\x1b[38;2;{0};{1};{2}m hi! : R:{0},G:{1},B:{2} \x1b[0m", random.Next(0,255), random.Next(0, 255), random.Next(0, 255));
+
             private ConsoleColor infoTextColor = ConsoleColor.White;
             private ConsoleColor warnTextColor = ConsoleColor.Yellow;
             private ConsoleColor errorTextColor = ConsoleColor.Red;
@@ -197,12 +226,19 @@ namespace Tools
             private ConsoleColor defaultTimestampColor = ConsoleColor.DarkBlue;
 
             private bool displayColor = true;
+            private bool advancedColor = false;
             private string subTitle = string.Empty;
 
             // Logger.SubTitle("我是副标题").Info("你好世界");
             // Logger.SetSubTitle("我是副标题");
 
+            private int heightBackColorCount = 0;
+            private int heightTextColorCount = 0;
+
             private int textColorCount = 0;
+            private RGBColor nextBackGroundRGBColor = null;
+            private RGBColor nextTextRGBColor = null;
+
             private ConsoleColor nextTextColor = ConsoleColor.Gray;
             private int subTitleCount = 0;
             private string nextSubTitle = string.Empty;
@@ -263,6 +299,39 @@ namespace Tools
                 displayColor = enable;
             }
 
+            public void EnableAdvancedColor()
+            {
+                if (!advancedColor)
+                {
+                    //https://stackoverflow.com/questions/7937256/custom-text-color-in-c-sharp-console-application
+                    var handle = NativeMethods.GetStdHandle(-11);
+                    NativeMethods.GetConsoleMode(handle, out int mode);
+                    NativeMethods.SetConsoleMode(handle, mode | 0x4);
+                    Console.OutputEncoding = Encoding.UTF8;
+                }
+                advancedColor = true;
+            }
+
+            public void PrintDebugHeightColor()
+            {
+                Random random = new Random(new DateTime().Millisecond);
+                for (int i = 0; i < 200; i++)
+                {
+                    if (i > 100)
+                    {
+                        int b_r = random.Next(0, 255);
+                        int b_g = random.Next(0, 255);
+                        int b_b = random.Next(0, 255);
+                        Console.Write("\u001b[48;2;{0};{1};{2}m", b_r, b_g, b_b);
+                        Console.WriteLine("hi! : R:{0},G:{1},B:{2} \u001b[0m", b_r, b_g, b_b);
+                    }
+                    else
+                    {
+                        Console.WriteLine("\x1b[38;2;{0};{1};{2}m hi! : R:{0},G:{1},B:{2} \x1b[0m \u001b[0m", random.Next(0, 255), random.Next(0, 255), random.Next(0, 255));
+                    }
+                }
+            }
+
             /// <summary>
             /// 设置一个统一的副标题
             /// </summary>
@@ -274,9 +343,32 @@ namespace Tools
 
             public Logger Color(ConsoleColor color)
             {
-                //var t = this.Copy();
-                this.textColorCount++;
-                this.nextTextColor = color;
+                if(displayColor && !advancedColor)
+                {
+                    //var t = this.Copy();
+                    this.textColorCount++;
+                    this.nextTextColor = color;
+                }
+                return this;
+            }
+
+            public Logger Color(int r, int g, int b)
+            {
+                if (displayColor && advancedColor)
+                {
+                    heightTextColorCount++;
+                    nextTextRGBColor = new RGBColor(r, g, b);
+                }
+                return this;
+            }
+
+            public Logger BackColor(int r, int g, int b)
+            {
+                if (displayColor && advancedColor)
+                {
+                    heightBackColorCount++;
+                    nextBackGroundRGBColor = new RGBColor(r, g, b);
+                }
                 return this;
             }
 
@@ -367,6 +459,20 @@ namespace Tools
                 {
                     Console.ForegroundColor = textColor;
                 }
+
+                if(heightTextColorCount > 0)
+                {
+                    heightTextColorCount--;
+                    Console.Write("\u001b[38;2;{0};{1};{2}m",nextTextRGBColor.r, nextTextRGBColor.g, nextTextRGBColor.b);
+                    text += "\u001b[0m";
+                }
+                if (heightBackColorCount > 0) 
+                {
+                    heightBackColorCount--;
+                    Console.Write("\u001b[48;2;{0};{1};{2}m", nextBackGroundRGBColor.r, nextBackGroundRGBColor.g, nextBackGroundRGBColor.b);
+                    text += "\u001b[0m";
+                }
+
                 Console.WriteLine(text, p);
                 Console.ForegroundColor = currentColor;
             }
