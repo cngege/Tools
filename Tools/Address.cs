@@ -82,7 +82,7 @@ namespace Tools
 
             // 创建远程线程
             [DllImport("kernel32.dll")]
-            public static extern int CreateRemoteThread(IntPtr hwnd, int attrib, int size, IntPtr address, IntPtr par, int flags, int threadid);
+            public static extern IntPtr CreateRemoteThread(IntPtr hwnd, int attrib, int size, IntPtr address, IntPtr par, int flags, out int threadid);
 
             
             [DllImport("kernel32.dll")]

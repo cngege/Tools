@@ -1,5 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection.Emit;
+using System.Runtime.InteropServices;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
@@ -35,11 +40,24 @@ namespace Tools
             /// <summary>
             /// 创建远程线程失败
             /// </summary>
-            Fail_CreateRemoteThread
+            Fail_CreateRemoteThread,
+            /// <summary>
+            /// 没有能获取线程退出返回码
+            /// </summary>
+            Fail_NoFoundExitCode,
+            /// <summary>
+            /// 退出码为0
+            /// </summary>
+            Fail_ExitCodeIsZero
         }
 
         public class DLLInject
         {
+            [DllImport("kernel32.dll")]
+            private static extern int WaitForSingleObject(IntPtr hwnd, int dwMilliseconds);
+            [DllImport("kernel32.dll")]
+            private static extern bool GetExitCodeThread(IntPtr hwnd, out IntPtr lpExitCode);
+
             // 有一个注入的方法
             /// <summary>
             /// 注入dll
@@ -55,22 +73,45 @@ namespace Tools
                     Address.Address.CloseHandle(hProcess);
                     return InjectState.Fail_OpenProcess;
                 }
-                IntPtr applyptr = Address.Address.VirtualAllocEx(hProcess, IntPtr.Zero, dllpath.Length+1, Address.Address.MEM_COMMIT | Address.Address.MEM_RESERVE, Address.Address.PAGE_READWRITE);
-                if (applyptr == IntPtr.Zero)
-                {
+                
+                bool isUnicode = CheckExistUnicode(dllpath);
+
+                byte[] dllpath_byte = isUnicode ? Encoding.Unicode.GetBytes(dllpath) : Encoding.UTF8.GetBytes(dllpath);
+                IntPtr applyptr = Address.Address.VirtualAllocEx(hProcess, IntPtr.Zero, dllpath_byte.Length + 1, Address.Address.MEM_COMMIT | Address.Address.MEM_RESERVE, Address.Address.PAGE_READWRITE);
+                if (applyptr == IntPtr.Zero) {
                     Address.Address.CloseHandle(hProcess);
                     return InjectState.Fail_ApplyMemory;
                 }
-                byte[] dllpath_byte = Encoding.ASCII.GetBytes(dllpath);
                 Address.Address.WriteValue_bytes(applyptr, dllpath_byte, hProcess);
-                if (Address.Address.CreateRemoteThread(hProcess, 0, 0, Address.Address.GetProcAddress(Address.Address.GetModuleHandleA("Kernel32"), "LoadLibraryA"), applyptr, 0, 0) == 0)
-                {
+                IntPtr Thread_LL = Address.Address.CreateRemoteThread(hProcess, 0, 0, Address.Address.GetProcAddress(Address.Address.GetModuleHandleA("Kernel32"), isUnicode ? "LoadLibraryW" : "LoadLibraryA"), applyptr, 0, out int threadid);
+                if (Thread_LL == IntPtr.Zero) {
                     Address.Address.CloseHandle(hProcess);
                     return InjectState.Fail_CreateRemoteThread;
                 }
-                Address.Address.VirtualFreeEx(hProcess, applyptr, 0, Address.Address.MEM_RELEASE);
+                _ = WaitForSingleObject(Thread_LL, int.MaxValue);
+                if (!GetExitCodeThread(Thread_LL, out IntPtr ExitCode)) {
+                    Address.Address.CloseHandle(hProcess);
+                    return InjectState.Fail_NoFoundExitCode;
+                }
+                if (ExitCode == IntPtr.Zero) {
+                    Address.Address.CloseHandle(hProcess);
+                    return InjectState.Fail_ExitCodeIsZero;
+                }
+
                 Address.Address.CloseHandle(hProcess);
                 return InjectState.Success;
+            }
+
+
+            private static bool CheckExistUnicode(string strInput) {
+                int i = strInput.Length;
+                if (i == 0)
+                    return false;
+                int j = System.Text.Encoding.Default.GetBytes(strInput).Length;
+                if (i != j)
+                    return true;
+                else
+                    return false;
             }
         }
     }
